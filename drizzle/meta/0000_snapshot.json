@@ -232,12 +232,8 @@
           "name": "budget_categories_budget_id_budgets_id_fk",
           "tableFrom": "budget_categories",
           "tableTo": "budgets",
-          "columnsFrom": [
-            "budget_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["budget_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -245,12 +241,8 @@
           "name": "budget_categories_category_id_categories_id_fk",
           "tableFrom": "budget_categories",
           "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -703,12 +695,8 @@
           "name": "transactions_account_id_accounts_id_fk",
           "tableFrom": "transactions",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -716,12 +704,8 @@
           "name": "transactions_category_id_categories_id_fk",
           "tableFrom": "transactions",
           "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -737,21 +721,12 @@
     "public.account_type": {
       "name": "account_type",
       "schema": "public",
-      "values": [
-        "cash",
-        "bank",
-        "mobile_money",
-        "investment",
-        "other"
-      ]
+      "values": ["cash", "bank", "mobile_money", "investment", "other"]
     },
     "public.category_type": {
       "name": "category_type",
       "schema": "public",
-      "values": [
-        "income",
-        "expense"
-      ]
+      "values": ["income", "expense"]
     },
     "public.provenance": {
       "name": "provenance",
@@ -767,20 +742,12 @@
     "public.transaction_source": {
       "name": "transaction_source",
       "schema": "public",
-      "values": [
-        "manual",
-        "import",
-        "bank_sync"
-      ]
+      "values": ["manual", "import", "bank_sync"]
     },
     "public.transaction_type": {
       "name": "transaction_type",
       "schema": "public",
-      "values": [
-        "income",
-        "expense",
-        "transfer"
-      ]
+      "values": ["income", "expense", "transfer"]
     }
   },
   "schemas": {},

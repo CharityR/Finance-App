@@ -10,9 +10,7 @@
 import { writeAudit } from "@/server/audit/log"
 
 export type DomainEventType =
-  | "budget.exceeded"
-  | "goal.contribution_logged"
-  | "goal.off_track"
+  "budget.exceeded" | "goal.contribution_logged" | "goal.off_track"
 
 export async function emitEvent(
   type: DomainEventType,

@@ -18,8 +18,8 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Coming in Phase 1</CardTitle>
           <CardDescription>
-            Cash balance, income, expenses, and budget utilization will show
-            up here once transactions and budgets are wired up.
+            Cash balance, income, expenses, and budget utilization will show up
+            here once transactions and budgets are wired up.
           </CardDescription>
         </CardHeader>
       </Card>

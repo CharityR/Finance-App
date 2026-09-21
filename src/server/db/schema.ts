@@ -238,7 +238,9 @@ export const auditLog = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("audit_log_user_created_idx").on(table.userId, table.createdAt)]
+  (table) => [
+    index("audit_log_user_created_idx").on(table.userId, table.createdAt),
+  ]
 )
 
 // ---------------------------------------------------------------------------

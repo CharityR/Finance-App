@@ -13,7 +13,8 @@ const globalForDb = globalThis as unknown as {
 // against Supabase's transaction-mode pooler, which doesn't support
 // server-side prepared statements.
 const queryClient =
-  globalForDb.queryClient ?? postgres(serverEnv.DATABASE_URL, { prepare: false })
+  globalForDb.queryClient ??
+  postgres(serverEnv.DATABASE_URL, { prepare: false })
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.queryClient = queryClient

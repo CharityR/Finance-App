@@ -14,7 +14,12 @@ const PROTECTED_PREFIXES = [
   "/settings",
 ]
 
-const AUTH_PREFIXES = ["/login", "/signup", "/forgot-password", "/reset-password"]
+const AUTH_PREFIXES = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+]
 
 /**
  * Runs on every request (see matcher below): refreshes the Supabase session
