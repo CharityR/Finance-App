@@ -118,5 +118,4 @@ certain.
 
 ## Status
 
-Phase 0 (foundation) in progress. See the plan doc linked above for the
-full Phase 0–5 roadmap.
+Phase 0 (foundation) in progress.
