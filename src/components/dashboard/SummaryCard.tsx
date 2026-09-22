@@ -1,5 +1,6 @@
+import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatMoney } from "@/lib/money"
+import { Tilt } from "@/components/ui/tilt"
 import type { ProvenanceValue } from "@/lib/provenance"
 
 const PROVENANCE_LABEL: Record<string, string> = {
@@ -27,21 +28,27 @@ export function SummaryCard({
         : "text-foreground"
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-muted-foreground text-sm font-normal">
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-semibold ${toneClass}`}>
-          {formatMoney(value.value, value.currency ?? "NGN")}
-        </div>
-        <p className="text-muted-foreground mt-1 text-xs">
-          {PROVENANCE_LABEL[value.provenance]} · as of{" "}
-          {new Date(value.asOf).toLocaleDateString("en-NG")}
-        </p>
-      </CardContent>
-    </Card>
+    <Tilt>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-muted-foreground text-sm font-normal">
+            {label}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-semibold ${toneClass}`}>
+            <AnimatedNumber
+              value={value.value}
+              kind="money"
+              currency={value.currency ?? "NGN"}
+            />
+          </div>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {PROVENANCE_LABEL[value.provenance]} · as of{" "}
+            {new Date(value.asOf).toLocaleDateString("en-NG")}
+          </p>
+        </CardContent>
+      </Card>
+    </Tilt>
   )
 }

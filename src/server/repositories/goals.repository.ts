@@ -16,7 +16,10 @@ export async function listGoals(userId: string, includeArchived = false) {
  * computed for every goal at once, e.g. the goals list page. */
 export async function listGoalsWithContributions(userId: string) {
   return db.query.goals.findMany({
-    where: and(eq(schema.goals.userId, userId), eq(schema.goals.status, "active")),
+    where: and(
+      eq(schema.goals.userId, userId),
+      eq(schema.goals.status, "active")
+    ),
     orderBy: [desc(schema.goals.createdAt)],
     with: {
       contributions: { orderBy: (c, { desc }) => [desc(c.occurredAt)] },

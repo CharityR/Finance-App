@@ -20,6 +20,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tilt } from "@/components/ui/tilt"
+import { AnimatedNumber } from "@/components/ui/animated-number"
 import { ContributionDialog } from "@/components/goals/ContributionDialog"
 import { GoalForm } from "@/components/goals/GoalForm"
 import { formatMoney } from "@/lib/money"
@@ -61,104 +63,123 @@ export function GoalCard({ goal }: { goal: Goal }) {
   const isComplete = goal.status === "completed"
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div>
-          <CardTitle className="text-base">{goal.name}</CardTitle>
-          <p className="text-muted-foreground text-xs">
-            {GOAL_CATEGORY_LABELS[
-              goal.category as keyof typeof GOAL_CATEGORY_LABELS
-            ] ?? goal.category}
-          </p>
-        </div>
-        {isComplete ? (
-          <Badge>Completed</Badge>
-        ) : goal.progress.isOnTrack ? (
-          <Badge variant="outline">On track</Badge>
-        ) : (
-          <Badge variant="destructive">Off track</Badge>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-muted-foreground flex justify-between text-sm">
-          <span>{formatMoney(Number(goal.currentAmount), goal.currency)}</span>
-          <span>{formatMoney(Number(goal.targetAmount), goal.currency)}</span>
-        </div>
-        <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-          <div
-            className="bg-primary h-full rounded-full"
-            style={{ width: `${clamped}%` }}
-          />
-        </div>
-        <p className="text-muted-foreground text-xs">
-          {goal.progress.percentage.toFixed(0)}% funded · target{" "}
-          {new Date(goal.targetDate).toLocaleDateString("en-NG", {
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-        {!isComplete && (
-          <p className="text-muted-foreground text-xs">
-            Needs{" "}
-            {formatMoney(
-              Math.max(goal.progress.requiredMonthlyContribution, 0),
-              goal.currency
-            )}
-            /month to stay on track
-            {goal.progress.projectedCompletionDate &&
-              ` · projected ${new Date(
-                goal.progress.projectedCompletionDate
-              ).toLocaleDateString("en-NG", {
-                month: "short",
-                year: "numeric",
-              })}`}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2 pt-1">
-          {!isComplete && (
-            <ContributionDialog
-              goalId={goal.id}
-              trigger={
-                <Button size="sm" variant="outline">
-                  <PlusCircle /> Contribute
-                </Button>
-              }
-            />
+    <Tilt>
+      <Card>
+        <CardHeader className="flex-row items-start justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">{goal.name}</CardTitle>
+            <p className="text-muted-foreground text-xs">
+              {GOAL_CATEGORY_LABELS[
+                goal.category as keyof typeof GOAL_CATEGORY_LABELS
+              ] ?? goal.category}
+            </p>
+          </div>
+          {isComplete ? (
+            <Badge>Completed</Badge>
+          ) : goal.progress.isOnTrack ? (
+            <Badge variant="outline">On track</Badge>
+          ) : (
+            <Badge variant="destructive">Off track</Badge>
           )}
-          <GoalForm
-            goal={goal}
-            trigger={
-              <Button size="sm" variant="ghost">
-                <Pencil /> Edit
-              </Button>
-            }
-          />
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button size="sm" variant="ghost" disabled={isPending}>
-                  <Archive /> Archive
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="text-muted-foreground flex justify-between text-sm">
+            <span>
+              <AnimatedNumber
+                value={Number(goal.currentAmount)}
+                kind="money"
+                currency={goal.currency}
+              />
+            </span>
+            <span>
+              <AnimatedNumber
+                value={Number(goal.targetAmount)}
+                kind="money"
+                currency={goal.currency}
+              />
+            </span>
+          </div>
+          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+            <div
+              className="bg-primary h-full rounded-full transition-[width] duration-500 ease-out"
+              style={{ width: `${clamped}%` }}
+            />
+          </div>
+          <p className="text-muted-foreground text-xs">
+            <AnimatedNumber
+              value={goal.progress.percentage}
+              kind="percent"
+              decimals={0}
+            />{" "}
+            funded · target{" "}
+            {new Date(goal.targetDate).toLocaleDateString("en-NG", {
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+          {!isComplete && (
+            <p className="text-muted-foreground text-xs">
+              Needs{" "}
+              {formatMoney(
+                Math.max(goal.progress.requiredMonthlyContribution, 0),
+                goal.currency
+              )}
+              /month to stay on track
+              {goal.progress.projectedCompletionDate &&
+                ` · projected ${new Date(
+                  goal.progress.projectedCompletionDate
+                ).toLocaleDateString("en-NG", {
+                  month: "short",
+                  year: "numeric",
+                })}`}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            {!isComplete && (
+              <ContributionDialog
+                goalId={goal.id}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    <PlusCircle /> Contribute
+                  </Button>
+                }
+              />
+            )}
+            <GoalForm
+              goal={goal}
+              trigger={
+                <Button size="sm" variant="ghost">
+                  <Pencil /> Edit
                 </Button>
               }
             />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Archive this goal?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  &quot;{goal.name}&quot; will be hidden from your active goals.
-                  This doesn&apos;t delete its contribution history.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleArchive}>
-                  Archive
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardContent>
-    </Card>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button size="sm" variant="ghost" disabled={isPending}>
+                    <Archive /> Archive
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Archive this goal?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    &quot;{goal.name}&quot; will be hidden from your active
+                    goals. This doesn&apos;t delete its contribution history.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleArchive}>
+                    Archive
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
+    </Tilt>
   )
 }
