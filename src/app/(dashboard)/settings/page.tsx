@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { CurrencyForm } from "@/components/settings/CurrencyForm"
+import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm"
 import { ThemeForm } from "@/components/settings/ThemeForm"
 import {
   Card,
@@ -9,8 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DEFAULT_THEME_PALETTE, type ThemePaletteId } from "@/lib/theme-palettes"
+import {
+  DEFAULT_THEME_PALETTE,
+  type ThemePaletteId,
+} from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
+import * as notificationsService from "@/server/services/notifications.service"
 import { createClient } from "@/server/supabase/server"
 
 export default async function SettingsPage() {
@@ -20,7 +25,10 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const profile = await getProfile(user.id)
+  const [profile, notificationPreferences] = await Promise.all([
+    getProfile(user.id),
+    notificationsService.getPreferences(user.id),
+  ])
 
   return (
     <div className="space-y-6">
@@ -59,9 +67,26 @@ export default async function SettingsPage() {
         <CardContent>
           <ThemeForm
             currentPalette={
-              (profile?.themePalette as ThemePaletteId) ??
-              DEFAULT_THEME_PALETTE
+              (profile?.themePalette as ThemePaletteId) ?? DEFAULT_THEME_PALETTE
             }
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>
+            Choose which events show up in your notification bell.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotificationPreferencesForm
+            currentPreferences={{
+              budgetExceeded: notificationPreferences.budgetExceeded,
+              goalOffTrack: notificationPreferences.goalOffTrack,
+              goalContributionLogged:
+                notificationPreferences.goalContributionLogged,
+            }}
           />
         </CardContent>
       </Card>

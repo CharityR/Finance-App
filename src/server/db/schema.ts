@@ -493,6 +493,58 @@ export const auditLog = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Notifications (Phase 6) — emitEvent() (src/server/events/emit.ts) writes
+// here in addition to the audit log whenever the user's preference for that
+// event type is enabled, so the in-app notification center has something to
+// show without every domain service needing to know about notifications
+// directly.
+// ---------------------------------------------------------------------------
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "budget_exceeded",
+  "goal_off_track",
+  "goal_contribution_logged",
+])
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    type: notificationTypeEnum("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    // Not a declared FK: the referenced entity's table varies by type
+    // (a budget category, a goal), mirroring audit_log's entityId above.
+    entityId: uuid("entity_id"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("notifications_user_created_idx").on(table.userId, table.createdAt),
+  ]
+)
+
+/**
+ * One row per user, created lazily on first save (see
+ * notifications.repository.ts) rather than at signup — a missing row means
+ * "use the defaults", which the repository applies in code.
+ */
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id").primaryKey(),
+  budgetExceeded: boolean("budget_exceeded").notNull().default(true),
+  goalOffTrack: boolean("goal_off_track").notNull().default(true),
+  goalContributionLogged: boolean("goal_contribution_logged")
+    .notNull()
+    .default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
+// ---------------------------------------------------------------------------
 // Relations (used by Drizzle's query API, e.g. db.query.transactions.findMany)
 // ---------------------------------------------------------------------------
 

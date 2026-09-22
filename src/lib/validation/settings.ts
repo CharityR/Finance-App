@@ -12,3 +12,12 @@ export const updateProfileSchema = z.object({
   themePalette: z.enum(THEME_PALETTE_IDS).optional(),
 })
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+
+export const updateNotificationPreferencesSchema = z.object({
+  budgetExceeded: z.boolean().optional(),
+  goalOffTrack: z.boolean().optional(),
+  goalContributionLogged: z.boolean().optional(),
+})
+export type UpdateNotificationPreferencesInput = z.infer<
+  typeof updateNotificationPreferencesSchema
+>

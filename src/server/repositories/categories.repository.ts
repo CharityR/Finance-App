@@ -15,3 +15,9 @@ export async function listCategoriesForUser(userId: string) {
     ],
   })
 }
+
+export async function getCategoryById(id: string) {
+  return db.query.categories.findFirst({
+    where: eq(schema.categories.id, id),
+  })
+}

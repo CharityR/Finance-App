@@ -1,3 +1,4 @@
+import { emitEvent } from "@/server/events/emit"
 import * as repo from "@/server/repositories/goals.repository"
 import type { CreateGoalInput, UpdateGoalInput } from "@/lib/validation/goals"
 
@@ -116,5 +117,32 @@ export async function logContribution(
   amount: number,
   occurredAt: Date
 ) {
-  return repo.logContribution(userId, goalId, amount, occurredAt)
+  const contribution = await repo.logContribution(
+    userId,
+    goalId,
+    amount,
+    occurredAt
+  )
+
+  const goal = await repo.getGoal(userId, goalId)
+  if (goal) {
+    await emitEvent("goal.contribution_logged", {
+      userId,
+      entityId: goalId,
+      goalName: goal.name,
+      amount,
+      currency: goal.currency,
+    })
+
+    const progress = computeGoalProgress(goal)
+    if (!progress.isOnTrack) {
+      await emitEvent("goal.off_track", {
+        userId,
+        entityId: goalId,
+        goalName: goal.name,
+      })
+    }
+  }
+
+  return contribution
 }

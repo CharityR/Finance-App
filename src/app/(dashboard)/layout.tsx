@@ -2,8 +2,10 @@ import { LogOut } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { NotificationBell } from "@/components/layout/NotificationBell"
 import { SidebarNav } from "@/components/layout/sidebar-nav"
 import { Button } from "@/components/ui/button"
+import * as notificationsService from "@/server/services/notifications.service"
 import { createClient } from "@/server/supabase/server"
 
 import { logout } from "./actions"
@@ -24,6 +26,10 @@ export default async function DashboardLayout({
   if (!user) {
     redirect("/login")
   }
+
+  const { notifications, unreadCount } = await notificationsService.listRecent(
+    user.id
+  )
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -55,7 +61,13 @@ export default async function DashboardLayout({
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl p-6">{children}</div>
+        <div className="mx-auto flex max-w-6xl justify-end px-6 pt-4">
+          <NotificationBell
+            initialNotifications={notifications}
+            initialUnreadCount={unreadCount}
+          />
+        </div>
+        <div className="mx-auto max-w-6xl p-6 pt-2">{children}</div>
       </main>
     </div>
   )
