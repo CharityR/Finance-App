@@ -1,5 +1,17 @@
-import { and, asc, desc, eq, gte, ilike, isNull, lte, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  isNull,
+  lt,
+  lte,
+  sql,
+} from "drizzle-orm"
 
+import { monthRange } from "@/lib/date"
 import { db, schema } from "@/server/db"
 import type { ListTransactionsQuery } from "@/lib/validation/transactions"
 
@@ -126,6 +138,51 @@ export async function updateTransaction(
     .returning()
 
   return updated
+}
+
+export async function getMonthlyTotals(userId: string, periodMonth: string) {
+  const { start, end } = monthRange(periodMonth)
+
+  const rows = await db
+    .select({
+      type: schema.transactions.type,
+      total: sql<string>`coalesce(sum(${schema.transactions.amount}), 0)`,
+    })
+    .from(schema.transactions)
+    .where(
+      and(
+        eq(schema.transactions.userId, userId),
+        isNull(schema.transactions.deletedAt),
+        gte(schema.transactions.occurredAt, start),
+        lt(schema.transactions.occurredAt, end)
+      )
+    )
+    .groupBy(schema.transactions.type)
+
+  const income = Number(rows.find((r) => r.type === "income")?.total ?? 0)
+  const expense = Number(rows.find((r) => r.type === "expense")?.total ?? 0)
+  return { income, expense }
+}
+
+/** All-time net (income − expense), used for the running cash balance. */
+export async function getAllTimeNetFlow(userId: string): Promise<number> {
+  const rows = await db
+    .select({
+      type: schema.transactions.type,
+      total: sql<string>`coalesce(sum(${schema.transactions.amount}), 0)`,
+    })
+    .from(schema.transactions)
+    .where(
+      and(
+        eq(schema.transactions.userId, userId),
+        isNull(schema.transactions.deletedAt)
+      )
+    )
+    .groupBy(schema.transactions.type)
+
+  const income = Number(rows.find((r) => r.type === "income")?.total ?? 0)
+  const expense = Number(rows.find((r) => r.type === "expense")?.total ?? 0)
+  return income - expense
 }
 
 export async function softDeleteTransaction(userId: string, id: string) {

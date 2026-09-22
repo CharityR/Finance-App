@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 import { db, schema } from "@/server/db"
 
@@ -29,4 +29,15 @@ export async function getOrCreateDefaultAccount(
     .returning()
 
   return created
+}
+
+export async function getTotalOpeningBalance(userId: string): Promise<number> {
+  const [{ total }] = await db
+    .select({
+      total: sql<string>`coalesce(sum(${schema.accounts.openingBalance}), 0)`,
+    })
+    .from(schema.accounts)
+    .where(eq(schema.accounts.userId, userId))
+
+  return Number(total)
 }
