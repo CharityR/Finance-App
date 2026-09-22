@@ -25,6 +25,12 @@ export async function getSecurity(id: string) {
   })
 }
 
+export async function getSecurityByTicker(ticker: string) {
+  return db.query.securities.findFirst({
+    where: eq(schema.securities.ticker, ticker.toUpperCase()),
+  })
+}
+
 export async function getLatestPrice(securityId: string) {
   return db.query.priceSnapshots.findFirst({
     where: eq(schema.priceSnapshots.securityId, securityId),

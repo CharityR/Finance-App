@@ -1,5 +1,6 @@
 import { config } from "dotenv"
 import { drizzle } from "drizzle-orm/postgres-js"
+import { sql } from "drizzle-orm"
 import postgres from "postgres"
 
 config({ path: ".env.local" })
@@ -30,6 +31,7 @@ async function main() {
   const { SYSTEM_INCOME_CATEGORIES, SYSTEM_EXPENSE_CATEGORIES } =
     await import("./seed-data/categories")
   const { SECURITY_FIXTURES } = await import("./seed-data/securities")
+  const { NEWS_FIXTURES } = await import("./seed-data/news")
 
   if (!process.env.DIRECT_URL) {
     throw new Error("DIRECT_URL is not set — copy .env.example to .env.local")
@@ -150,6 +152,45 @@ async function main() {
     )
   } else {
     console.log("Securities already seeded, skipping.")
+  }
+
+  const [{ count: existingNewsCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.newsItems)
+  if (existingNewsCount === 0) {
+    const allSecurities = await db.query.securities.findMany({
+      columns: { id: true, ticker: true },
+    })
+    const securityIdByTicker = new Map(
+      allSecurities.map((s) => [s.ticker, s.id])
+    )
+    const now = new Date()
+
+    const newsRows: (typeof schema.newsItems.$inferInsert)[] =
+      NEWS_FIXTURES.map((n) => {
+        const securityId = n.ticker
+          ? (securityIdByTicker.get(n.ticker) ?? null)
+          : null
+        if (n.ticker && !securityId) return null
+        const publishedAt = new Date(now)
+        publishedAt.setDate(publishedAt.getDate() - n.daysAgo)
+        return {
+          securityId,
+          sector: n.sector,
+          headline: n.headline,
+          summary: n.summary,
+          source: n.source,
+          publishedAt,
+          isMock: true,
+        }
+      }).filter((row): row is NonNullable<typeof row> => row !== null)
+
+    if (newsRows.length > 0) {
+      await db.insert(schema.newsItems).values(newsRows)
+    }
+    console.log(`Seeded ${newsRows.length} news items.`)
+  } else {
+    console.log("News items already seeded, skipping.")
   }
 
   await client.end()

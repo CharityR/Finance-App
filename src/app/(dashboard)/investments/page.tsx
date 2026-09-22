@@ -4,12 +4,14 @@ import { AllocationChart } from "@/components/investments/AllocationChart"
 import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
 import { HoldingForm } from "@/components/investments/HoldingForm"
 import { HoldingsTable } from "@/components/investments/HoldingsTable"
+import { NewsFeed } from "@/components/investments/NewsFeed"
 import { PortfolioSummaryCard } from "@/components/investments/PortfolioSummaryCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import * as securitiesRepo from "@/server/repositories/securities.repository"
 import * as dividendIncomeService from "@/server/services/dividend-income.service"
 import * as holdingsService from "@/server/services/holdings.service"
+import * as newsService from "@/server/services/news.service"
 import * as portfolioService from "@/server/services/portfolio.service"
 import { createClient } from "@/server/supabase/server"
 
@@ -20,12 +22,13 @@ export default async function InvestmentsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const [holdings, portfolioByCurrency, dividendIncome, securities] =
+  const [holdings, portfolioByCurrency, dividendIncome, securities, news] =
     await Promise.all([
       holdingsService.listHoldingsWithValuation(user.id),
       portfolioService.getPortfolioSummary(user.id),
       dividendIncomeService.getEstimatedAnnualIncome(user.id),
       securitiesRepo.searchSecurities(""),
+      newsService.getRelevantNews(user.id),
     ])
 
   const securityOptions = securities.map((s) => ({
@@ -85,6 +88,13 @@ export default async function InvestmentsPage() {
       <DividendIncomeCard incomeByCurrency={dividendIncome} />
 
       <HoldingsTable holdings={holdings} />
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold tracking-tight">
+          Relevant news
+        </h2>
+        <NewsFeed items={news} />
+      </div>
     </div>
   )
 }

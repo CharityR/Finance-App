@@ -392,6 +392,55 @@ export const dividendEvents = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Module 12/14/28 — Company/Sector News & Watchlist (Phase 4)
+// ---------------------------------------------------------------------------
+
+export const watchlistItems = pgTable(
+  "watchlist_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    securityId: uuid("security_id")
+      .notNull()
+      .references(() => securities.id, { onDelete: "cascade" }),
+    addedAt: timestamp("added_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("watchlist_items_user_id_idx").on(table.userId),
+    uniqueIndex("watchlist_items_user_security_idx").on(
+      table.userId,
+      table.securityId
+    ),
+  ]
+)
+
+/**
+ * Mock fixture news (Phase 4-5). A real Phase 6+ adapter would populate this
+ * same table from a live news API, so calling code never changes.
+ */
+export const newsItems = pgTable(
+  "news_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    securityId: uuid("security_id").references(() => securities.id, {
+      onDelete: "cascade",
+    }),
+    sector: text("sector"),
+    headline: text("headline").notNull(),
+    summary: text("summary").notNull(),
+    source: text("source").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    isMock: boolean("is_mock").notNull().default(true),
+  },
+  (table) => [
+    index("news_item_security_id_idx").on(table.securityId),
+    index("news_item_published_at_idx").on(table.publishedAt),
+  ]
+)
+
+// ---------------------------------------------------------------------------
 // Cross-cutting stubs — created now so later phases never need a destructive
 // migration to introduce them; only additive columns/tables get layered on.
 // ---------------------------------------------------------------------------
@@ -528,6 +577,20 @@ export const priceSnapshotsRelations = relations(priceSnapshots, ({ one }) => ({
 export const dividendEventsRelations = relations(dividendEvents, ({ one }) => ({
   security: one(securities, {
     fields: [dividendEvents.securityId],
+    references: [securities.id],
+  }),
+}))
+
+export const watchlistItemsRelations = relations(watchlistItems, ({ one }) => ({
+  security: one(securities, {
+    fields: [watchlistItems.securityId],
+    references: [securities.id],
+  }),
+}))
+
+export const newsItemsRelations = relations(newsItems, ({ one }) => ({
+  security: one(securities, {
+    fields: [newsItems.securityId],
     references: [securities.id],
   }),
 }))

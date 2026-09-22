@@ -1,6 +1,7 @@
 "use client"
 
 import { Trash2 } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -75,7 +76,12 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
           {holdings.map((h) => (
             <TableRow key={h.id}>
               <TableCell>
-                <div className="font-medium">{h.ticker}</div>
+                <Link
+                  href={`/investments/${h.ticker}`}
+                  className="font-medium hover:underline"
+                >
+                  {h.ticker}
+                </Link>
                 <div className="text-muted-foreground text-xs">{h.name}</div>
               </TableCell>
               <TableCell className="text-right">
