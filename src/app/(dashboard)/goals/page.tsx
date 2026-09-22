@@ -4,13 +4,10 @@ import { GoalCard } from "@/components/goals/GoalCard"
 import { GoalForm } from "@/components/goals/GoalForm"
 import { Button } from "@/components/ui/button"
 import * as goalsService from "@/server/services/goals.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function GoalsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const goals = await goalsService.listGoalsWithProgress(user.id)

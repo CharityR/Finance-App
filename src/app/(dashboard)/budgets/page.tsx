@@ -13,13 +13,10 @@ import { formatMoney } from "@/lib/money"
 import { listCategoriesForUser } from "@/server/repositories/categories.repository"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as budgetsService from "@/server/services/budgets.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function BudgetsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const [progress, categories, profile] = await Promise.all([

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { cache } from "react"
 
 import { clientEnv } from "@/lib/env.client"
 
@@ -35,3 +36,20 @@ export async function createClient() {
     }
   )
 }
+
+/**
+ * `auth.getUser()` revalidates the session with Supabase's auth server over
+ * the network on every call — it's not a free local JWT decode. Every
+ * protected layout and page calls it independently (defense in depth, not a
+ * mistake), which without this wrapper meant 3-4 sequential network round
+ * trips stacked on top of each other for a single page load. React's
+ * `cache()` dedupes calls with the same arguments within one server request,
+ * so the whole layout/page tree shares a single request to Supabase instead.
+ */
+export const getCurrentUser = cache(async () => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user
+})

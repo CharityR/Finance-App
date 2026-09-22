@@ -13,13 +13,10 @@ import * as dividendIncomeService from "@/server/services/dividend-income.servic
 import * as holdingsService from "@/server/services/holdings.service"
 import * as newsService from "@/server/services/news.service"
 import * as portfolioService from "@/server/services/portfolio.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function InvestmentsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const [holdings, portfolioByCurrency, dividendIncome, securities, news] =

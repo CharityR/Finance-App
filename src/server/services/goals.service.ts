@@ -74,19 +74,11 @@ export function computeGoalProgress(goal: {
 }
 
 export async function listGoalsWithProgress(userId: string) {
-  const goals = await repo.listGoals(userId)
-  return Promise.all(
-    goals.map(async (goal) => {
-      const full = await repo.getGoal(userId, goal.id)
-      return {
-        ...goal,
-        progress: computeGoalProgress({
-          ...goal,
-          contributions: full?.contributions ?? [],
-        }),
-      }
-    })
-  )
+  const goals = await repo.listGoalsWithContributions(userId)
+  return goals.map((goal) => ({
+    ...goal,
+    progress: computeGoalProgress(goal),
+  }))
 }
 
 export async function getGoalWithProgress(userId: string, id: string) {

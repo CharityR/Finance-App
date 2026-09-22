@@ -11,13 +11,10 @@ import {
 } from "@/components/ui/card"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as dashboardService from "@/server/services/dashboard.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const profile = await getProfile(user.id)

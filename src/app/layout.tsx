@@ -3,7 +3,7 @@ import "./globals.css"
 
 import { DEFAULT_THEME_PALETTE } from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export const metadata: Metadata = {
   title: "Kovault Financial",
@@ -11,10 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const profile = user ? await getProfile(user.id) : null
   const themePalette = profile?.themePalette ?? DEFAULT_THEME_PALETTE
 

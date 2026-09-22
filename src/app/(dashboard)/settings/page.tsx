@@ -16,13 +16,10 @@ import {
 } from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as notificationsService from "@/server/services/notifications.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function SettingsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const [profile, notificationPreferences] = await Promise.all([

@@ -12,13 +12,10 @@ import {
 import * as goalsRepo from "@/server/repositories/goals.repository"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as portfolioService from "@/server/services/portfolio.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function ForecastPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const [profile, portfolioByCurrency, goals] = await Promise.all([

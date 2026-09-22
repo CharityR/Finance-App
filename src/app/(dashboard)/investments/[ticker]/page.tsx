@@ -13,17 +13,14 @@ import {
 import { formatMoney } from "@/lib/money"
 import * as newsRepo from "@/server/repositories/news.repository"
 import * as securitiesRepo from "@/server/repositories/securities.repository"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function CompanyDetailPage({
   params,
 }: {
   params: Promise<{ ticker: string }>
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const { ticker } = await params

@@ -4,13 +4,10 @@ import { WatchlistForm } from "@/components/watchlist/WatchlistForm"
 import { WatchlistTable } from "@/components/watchlist/WatchlistTable"
 import * as securitiesRepo from "@/server/repositories/securities.repository"
 import * as watchlistService from "@/server/services/watchlist.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function WatchlistPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const [items, securities] = await Promise.all([

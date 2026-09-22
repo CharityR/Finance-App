@@ -7,17 +7,14 @@ import { Button } from "@/components/ui/button"
 import { listTransactionsQuerySchema } from "@/lib/validation/transactions"
 import { listCategoriesForUser } from "@/server/repositories/categories.repository"
 import * as transactionsService from "@/server/services/transactions.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 export default async function TransactionsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect("/login")
 
   const params = await searchParams

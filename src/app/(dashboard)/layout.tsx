@@ -6,7 +6,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell"
 import { SidebarNav } from "@/components/layout/sidebar-nav"
 import { Button } from "@/components/ui/button"
 import * as notificationsService from "@/server/services/notifications.service"
-import { createClient } from "@/server/supabase/server"
+import { getCurrentUser } from "@/server/supabase/server"
 
 import { logout } from "./actions"
 
@@ -18,10 +18,10 @@ export default async function DashboardLayout({
   // Defense in depth: proxy.ts already redirects unauthenticated requests
   // away from this route group, but every protected layout/Server Function
   // verifies the user again itself rather than relying on the proxy alone.
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getCurrentUser() is cached per-request (see supabase/server.ts), so this
+  // and every page's own check below share one Supabase auth round trip
+  // instead of each hitting the network separately.
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect("/login")
