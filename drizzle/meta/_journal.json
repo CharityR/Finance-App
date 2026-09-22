@@ -15,6 +15,13 @@
       "when": 1790094675022,
       "tag": "0001_panoramic_moira_mactaggert",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790095102510,
+      "tag": "0002_true_gravity",
+      "breakpoints": true
     }
   ]
 }

@@ -284,6 +284,114 @@ export const goalContributions = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Module 6/7/8 — Investment Portfolio, Asset Allocation, Dividends (Phase 3)
+// ---------------------------------------------------------------------------
+
+export const assetClassEnum = pgEnum("asset_class", [
+  "stock",
+  "etf",
+  "mutual_fund",
+  "bond",
+  "treasury_bill",
+  "reit",
+  "gold",
+  "other",
+])
+
+/** Shared reference data — not user-specific. Mock-seeded in Phase 3-5. */
+export const securities = pgTable(
+  "securities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticker: text("ticker").notNull(),
+    name: text("name").notNull(),
+    exchange: text("exchange").notNull(),
+    assetClass: assetClassEnum("asset_class").notNull(),
+    sector: text("sector"),
+    country: text("country").notNull(),
+    currency: text("currency").notNull(),
+    isMock: boolean("is_mock").notNull().default(true),
+  },
+  (table) => [
+    uniqueIndex("securities_ticker_exchange_idx").on(
+      table.ticker,
+      table.exchange
+    ),
+  ]
+)
+
+export const holdings = pgTable(
+  "holdings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    securityId: uuid("security_id")
+      .notNull()
+      .references(() => securities.id, { onDelete: "cascade" }),
+    quantity: numeric("quantity", { precision: 19, scale: 6 }).notNull(),
+    averageCostBasis: numeric("average_cost_basis", {
+      precision: 19,
+      scale: 4,
+    }).notNull(),
+    currency: text("currency").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("holdings_user_id_idx").on(table.userId),
+    uniqueIndex("holdings_user_security_idx").on(
+      table.userId,
+      table.securityId
+    ),
+  ]
+)
+
+/** Mock-generated (Phase 3-5) or real (Phase 6+) price history per security. */
+export const priceSnapshots = pgTable(
+  "price_snapshot",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    securityId: uuid("security_id")
+      .notNull()
+      .references(() => securities.id, { onDelete: "cascade" }),
+    price: numeric("price", { precision: 19, scale: 4 }).notNull(),
+    currency: text("currency").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+    provenance: provenanceEnum("provenance").notNull().default("current"),
+    isMock: boolean("is_mock").notNull().default(true),
+  },
+  (table) => [
+    index("price_snapshot_security_fetched_idx").on(
+      table.securityId,
+      table.fetchedAt
+    ),
+  ]
+)
+
+export const dividendEvents = pgTable(
+  "dividend_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    securityId: uuid("security_id")
+      .notNull()
+      .references(() => securities.id, { onDelete: "cascade" }),
+    exDate: date("ex_date").notNull(),
+    payDate: date("pay_date").notNull(),
+    amountPerShare: numeric("amount_per_share", {
+      precision: 19,
+      scale: 4,
+    }).notNull(),
+    currency: text("currency").notNull(),
+    isMock: boolean("is_mock").notNull().default(true),
+  },
+  (table) => [index("dividend_event_security_id_idx").on(table.securityId)]
+)
+
+// ---------------------------------------------------------------------------
 // Cross-cutting stubs — created now so later phases never need a destructive
 // migration to introduce them; only additive columns/tables get layered on.
 // ---------------------------------------------------------------------------
@@ -396,3 +504,30 @@ export const goalContributionsRelations = relations(
     }),
   })
 )
+
+export const securitiesRelations = relations(securities, ({ many }) => ({
+  holdings: many(holdings),
+  priceSnapshots: many(priceSnapshots),
+  dividendEvents: many(dividendEvents),
+}))
+
+export const holdingsRelations = relations(holdings, ({ one }) => ({
+  security: one(securities, {
+    fields: [holdings.securityId],
+    references: [securities.id],
+  }),
+}))
+
+export const priceSnapshotsRelations = relations(priceSnapshots, ({ one }) => ({
+  security: one(securities, {
+    fields: [priceSnapshots.securityId],
+    references: [securities.id],
+  }),
+}))
+
+export const dividendEventsRelations = relations(dividendEvents, ({ one }) => ({
+  security: one(securities, {
+    fields: [dividendEvents.securityId],
+    references: [securities.id],
+  }),
+}))
