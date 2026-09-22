@@ -38,7 +38,10 @@ export function MobileNav({
           <SheetHeader className="border-b">
             <SheetTitle>WealthPilot</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto" onClick={() => setOpen(false)}>
+          <div
+            className="flex-1 overflow-y-auto"
+            onClick={() => setOpen(false)}
+          >
             <SidebarNav />
           </div>
           <div className="border-t p-3">

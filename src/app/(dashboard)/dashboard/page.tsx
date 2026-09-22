@@ -66,26 +66,52 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {summary.hasBudget && summary.budgetUtilization ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Budget utilization</CardTitle>
-            <CardDescription>
-              {summary.budgetUtilization.value.toFixed(0)}% of this month&apos;s
-              budgeted categories used
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>No budget yet</CardTitle>
-            <CardDescription>
-              Set up a budget to track spending against limits.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {summary.hasBudget && summary.budgetUtilization ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget utilization</CardTitle>
+              <CardDescription>
+                {summary.budgetUtilization.value.toFixed(0)}% of this
+                month&apos;s budgeted categories used
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>No budget yet</CardTitle>
+              <CardDescription>
+                Set up a budget to track spending against limits.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {summary.goalsSummary ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Goals</CardTitle>
+              <CardDescription>
+                {summary.goalsSummary.overallPercentage.value.toFixed(0)}%
+                funded across {summary.goalsSummary.count} active goal
+                {summary.goalsSummary.count === 1 ? "" : "s"}
+                {summary.goalsSummary.offTrackCount > 0 &&
+                  ` · ${summary.goalsSummary.offTrackCount} off track`}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>No goals yet</CardTitle>
+              <CardDescription>
+                Create a savings or investment goal to track progress toward it.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

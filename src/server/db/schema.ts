@@ -193,6 +193,97 @@ export const budgetCategories = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Module 5 — Financial Goals (Phase 2)
+// ---------------------------------------------------------------------------
+
+export const goalCategoryEnum = pgEnum("goal_category", [
+  "emergency_fund",
+  "house",
+  "car",
+  "education",
+  "travel",
+  "retirement",
+  "investment_target",
+  "debt_repayment",
+  "business_capital",
+  "custom",
+])
+
+export const goalPriorityEnum = pgEnum("goal_priority", [
+  "low",
+  "medium",
+  "high",
+])
+
+export const goalStatusEnum = pgEnum("goal_status", [
+  "active",
+  "completed",
+  "archived",
+])
+
+export const contributionFrequencyEnum = pgEnum("contribution_frequency", [
+  "weekly",
+  "monthly",
+  "yearly",
+])
+
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    name: text("name").notNull(),
+    category: goalCategoryEnum("category").notNull().default("custom"),
+    targetAmount: numeric("target_amount", {
+      precision: 19,
+      scale: 4,
+    }).notNull(),
+    currentAmount: numeric("current_amount", { precision: 19, scale: 4 })
+      .notNull()
+      .default("0"),
+    targetDate: date("target_date").notNull(),
+    priority: goalPriorityEnum("priority").notNull().default("medium"),
+    contributionFrequency: contributionFrequencyEnum("contribution_frequency")
+      .notNull()
+      .default("monthly"),
+    contributionAmount: numeric("contribution_amount", {
+      precision: 19,
+      scale: 4,
+    })
+      .notNull()
+      .default("0"),
+    currency: text("currency").notNull().default("NGN"),
+    status: goalStatusEnum("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("goals_user_id_idx").on(table.userId)]
+)
+
+export const goalContributions = pgTable(
+  "goal_contributions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => goals.id, { onDelete: "cascade" }),
+    amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    transactionId: uuid("transaction_id").references(() => transactions.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("goal_contributions_goal_id_idx").on(table.goalId)]
+)
+
+// ---------------------------------------------------------------------------
 // Cross-cutting stubs — created now so later phases never need a destructive
 // migration to introduce them; only additive columns/tables get layered on.
 // ---------------------------------------------------------------------------
@@ -288,6 +379,20 @@ export const budgetCategoriesRelations = relations(
     category: one(categories, {
       fields: [budgetCategories.categoryId],
       references: [categories.id],
+    }),
+  })
+)
+
+export const goalsRelations = relations(goals, ({ many }) => ({
+  contributions: many(goalContributions),
+}))
+
+export const goalContributionsRelations = relations(
+  goalContributions,
+  ({ one }) => ({
+    goal: one(goals, {
+      fields: [goalContributions.goalId],
+      references: [goals.id],
     }),
   })
 )
