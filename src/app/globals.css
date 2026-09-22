@@ -43,6 +43,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -59,8 +61,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -70,8 +72,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
+  --ring: #0d9488;
+  --chart-1: #0d9488;
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
@@ -79,12 +81,17 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: #0d9488;
+
+  /* Fixed brand mark color — the logo/wordmark always uses this, regardless
+     of which theme palette below is active for --primary. */
+  --brand: #0d9488;
+  --brand-foreground: #ffffff;
 }
 
 .dark {
@@ -94,8 +101,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #14b8a6;
+  --primary-foreground: #052e2b;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -105,20 +112,125 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
+  --ring: #14b8a6;
+  --chart-1: #14b8a6;
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #14b8a6;
+  --sidebar-primary-foreground: #052e2b;
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: #14b8a6;
+
+  --brand: #2dd4bf;
+  --brand-foreground: #052e2b;
+}
+
+/*
+ * Theme palettes. `data-theme` is set on <html> (from the signed-in user's
+ * saved preference, or "teal" — the brand default — otherwise). Only the
+ * interactive accent colors change between palettes; --brand (the
+ * logo/wordmark color) is fixed above and never overridden here, so the
+ * product always visibly reflects its brand color regardless of theme.
+ */
+[data-theme="ocean"] {
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #2563eb;
+}
+.dark[data-theme="ocean"] {
+  --primary: #3b82f6;
+  --primary-foreground: #0b1220;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #0b1220;
+  --sidebar-ring: #3b82f6;
+}
+
+[data-theme="indigo"] {
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --ring: #4f46e5;
+  --chart-1: #4f46e5;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #4f46e5;
+}
+.dark[data-theme="indigo"] {
+  --primary: #6366f1;
+  --primary-foreground: #0f0b2e;
+  --ring: #6366f1;
+  --chart-1: #6366f1;
+  --sidebar-primary: #6366f1;
+  --sidebar-primary-foreground: #0f0b2e;
+  --sidebar-ring: #6366f1;
+}
+
+[data-theme="forest"] {
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --ring: #059669;
+  --chart-1: #059669;
+  --sidebar-primary: #059669;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #059669;
+}
+.dark[data-theme="forest"] {
+  --primary: #10b981;
+  --primary-foreground: #06231a;
+  --ring: #10b981;
+  --chart-1: #10b981;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #06231a;
+  --sidebar-ring: #10b981;
+}
+
+[data-theme="amber"] {
+  --primary: #b45309;
+  --primary-foreground: #ffffff;
+  --ring: #b45309;
+  --chart-1: #b45309;
+  --sidebar-primary: #b45309;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #b45309;
+}
+.dark[data-theme="amber"] {
+  --primary: #d97706;
+  --primary-foreground: #2b1503;
+  --ring: #d97706;
+  --chart-1: #d97706;
+  --sidebar-primary: #d97706;
+  --sidebar-primary-foreground: #2b1503;
+  --sidebar-ring: #d97706;
+}
+
+[data-theme="rose"] {
+  --primary: #be123c;
+  --primary-foreground: #ffffff;
+  --ring: #be123c;
+  --chart-1: #be123c;
+  --sidebar-primary: #be123c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #be123c;
+}
+.dark[data-theme="rose"] {
+  --primary: #e11d48;
+  --primary-foreground: #2b0510;
+  --ring: #e11d48;
+  --chart-1: #e11d48;
+  --sidebar-primary: #e11d48;
+  --sidebar-primary-foreground: #2b0510;
+  --sidebar-ring: #e11d48;
 }
 
 @layer base {

@@ -24,7 +24,9 @@ export function MobileNav({
 
   return (
     <div className="flex items-center justify-between border-b px-4 py-3 md:hidden">
-      <span className="text-lg font-semibold tracking-tight">WealthPilot</span>
+      <span className="text-brand text-lg font-semibold tracking-tight">
+        Kovault Financial
+      </span>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={
@@ -36,7 +38,7 @@ export function MobileNav({
         />
         <SheetContent side="left" className="flex w-64 flex-col p-0">
           <SheetHeader className="border-b">
-            <SheetTitle>WealthPilot</SheetTitle>
+            <SheetTitle className="text-brand">Kovault Financial</SheetTitle>
           </SheetHeader>
           <div
             className="flex-1 overflow-y-auto"

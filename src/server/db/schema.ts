@@ -67,6 +67,7 @@ export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
   displayName: text("display_name"),
   baseCurrency: text("base_currency").notNull().default("NGN"),
+  themePalette: text("theme_palette").notNull().default("teal"),
   timezone: text("timezone").notNull().default("Africa/Lagos"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })

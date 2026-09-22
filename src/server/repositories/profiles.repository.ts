@@ -13,6 +13,7 @@ export async function updateProfile(
   data: Partial<{
     displayName: string
     baseCurrency: string
+    themePalette: string
     timezone: string
     onboardingCompleted: boolean
   }>

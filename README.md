@@ -1,4 +1,4 @@
-# WealthPilot
+# Kovault Financial
 
 Personal financial management + budgeting + investment portfolio tracking —
 a Nigeria-first (NGN), single financial command center. Built in phases:

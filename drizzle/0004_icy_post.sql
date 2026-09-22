@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "theme_palette" text DEFAULT 'teal' NOT NULL;

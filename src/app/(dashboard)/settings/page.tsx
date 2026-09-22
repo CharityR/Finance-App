@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { CurrencyForm } from "@/components/settings/CurrencyForm"
+import { ThemeForm } from "@/components/settings/ThemeForm"
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { DEFAULT_THEME_PALETTE, type ThemePaletteId } from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import { createClient } from "@/server/supabase/server"
 
@@ -44,6 +46,23 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <CurrencyForm currentCurrency={profile?.baseCurrency ?? "NGN"} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>
+            Pick an accent color for buttons, links, and charts. Kovault
+            Financial&apos;s brand mark always stays teal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThemeForm
+            currentPalette={
+              (profile?.themePalette as ThemePaletteId) ??
+              DEFAULT_THEME_PALETTE
+            }
+          />
         </CardContent>
       </Card>
     </div>

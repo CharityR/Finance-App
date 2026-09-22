@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test"
 
 test("homepage links to login and signup", async ({ page }) => {
   await page.goto("/")
-  await expect(page.getByRole("heading", { name: "WealthPilot" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Kovault Financial" })
+  ).toBeVisible()
   await expect(page.getByRole("button", { name: "Log in" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Get started" })).toBeVisible()
 })

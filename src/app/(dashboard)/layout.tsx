@@ -30,8 +30,8 @@ export default async function DashboardLayout({
       <MobileNav userEmail={user.email ?? ""} logout={logout} />
       <aside className="hidden w-56 shrink-0 border-r md:flex md:flex-col">
         <div className="border-b px-4 py-4">
-          <span className="text-lg font-semibold tracking-tight">
-            WealthPilot
+          <span className="text-brand text-lg font-semibold tracking-tight">
+            Kovault Financial
           </span>
         </div>
         <div className="flex-1 overflow-y-auto">
