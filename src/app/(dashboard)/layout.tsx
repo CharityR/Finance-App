@@ -1,8 +1,9 @@
 import { LogOut } from "lucide-react"
 import { redirect } from "next/navigation"
 
-import { Button } from "@/components/ui/button"
+import { MobileNav } from "@/components/layout/mobile-nav"
 import { SidebarNav } from "@/components/layout/sidebar-nav"
+import { Button } from "@/components/ui/button"
 import { createClient } from "@/server/supabase/server"
 
 import { logout } from "./actions"
@@ -25,7 +26,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <MobileNav userEmail={user.email ?? ""} logout={logout} />
       <aside className="hidden w-56 shrink-0 border-r md:flex md:flex-col">
         <div className="border-b px-4 py-4">
           <span className="text-lg font-semibold tracking-tight">
