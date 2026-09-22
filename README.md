@@ -39,8 +39,8 @@ later phases.
    cp .env.example .env.local
    ```
 
-   - `DATABASE_URL` is the **pooled** connection string (port 6543, `?pgbouncer=true&connection_limit=1`).
-   - `DIRECT_URL` is the **direct** connection string (port 5432), used only for migrations.
+   - Use the **Connection Pooling** tab's connection strings for both `DATABASE_URL` (transaction mode, port 6543, `?pgbouncer=true&connection_limit=1`) and `DIRECT_URL` (session mode, port 5432, used only for migrations).
+   - Don't use the "direct connection" host (`db.<ref>.supabase.co`) — it's IPv6-only on Supabase's free tier and will fail with `ENOTFOUND` on networks without outbound IPv6.
 
 3. Apply the database schema:
 
