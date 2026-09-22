@@ -1,6 +1,8 @@
 import { writeAudit } from "@/server/audit/log"
+import { emitEvent } from "@/server/events/emit"
 import { getOrCreateDefaultAccount } from "@/server/repositories/accounts.repository"
 import * as repo from "@/server/repositories/transactions.repository"
+import * as budgetsService from "@/server/services/budgets.service"
 import type {
   CreateTransactionInput,
   ListTransactionsQuery,
@@ -37,6 +39,21 @@ export async function createTransaction(
     entity: "transaction",
     entityId: created.id,
   })
+
+  if (input.type === "expense" && input.categoryId) {
+    const overspend = await budgetsService.checkCategoryOverspend(
+      userId,
+      input.categoryId,
+      input.occurredAt
+    )
+    if (overspend) {
+      await emitEvent("budget.exceeded", {
+        userId,
+        entityId: input.categoryId,
+        ...overspend,
+      })
+    }
+  }
 
   return created
 }
