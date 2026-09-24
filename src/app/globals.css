@@ -132,6 +132,48 @@
 }
 
 /*
+ * A warm, neutral off-white — distinct from "light" (which carries a faint
+ * teal tint) for people who'd rather the background read as plain paper
+ * than as brand-tinted.
+ */
+.offwhite {
+  --background: oklch(0.96 0.006 85);
+  --foreground: oklch(0.2 0 0);
+  --card: oklch(0.985 0.004 85);
+  --card-foreground: oklch(0.2 0 0);
+  --popover: oklch(0.985 0.004 85);
+  --popover-foreground: oklch(0.2 0 0);
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --secondary: oklch(0.93 0.006 85);
+  --secondary-foreground: oklch(0.25 0 0);
+  --muted: oklch(0.93 0.006 85);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.9 0.02 80);
+  --accent-foreground: #0f6e63;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.006 85);
+  --input: oklch(0.88 0.006 85);
+  --ring: #0d9488;
+  --chart-1: #0d9488;
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.92 0.012 85);
+  --sidebar-foreground: oklch(0.25 0.01 85);
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: oklch(0.87 0.02 85);
+  --sidebar-accent-foreground: #0f6e63;
+  --sidebar-border: oklch(0.85 0.012 85);
+  --sidebar-ring: #0d9488;
+
+  --brand: #0d9488;
+  --brand-foreground: #ffffff;
+}
+
+/*
  * Theme palettes. `data-theme` is set on <html> (from the signed-in user's
  * saved preference, or "teal" — the brand default — otherwise). Only the
  * interactive accent colors change between palettes; --brand (the
