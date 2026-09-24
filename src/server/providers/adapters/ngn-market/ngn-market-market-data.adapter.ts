@@ -3,7 +3,9 @@ import type {
   LiveNewsItem,
   LiveQuote,
   MarketDataProvider,
+  ResolvedSecurity,
   SecurityRef,
+  SymbolSearchResult,
 } from "@/server/providers/ports/market-data.port"
 
 const BASE_URL = "https://api.ngnmarket.com/v1"
@@ -31,6 +33,8 @@ type NgnMarketEnvelope<T> =
 
 type NgnMarketCompany = {
   symbol: string
+  name: string
+  sector: string | null
   price: number
   price_change_percent: number
   last_updated: string
@@ -108,5 +112,51 @@ export const ngnMarketMarketDataAdapter: MarketDataProvider = {
       source: item.source,
       publishedAt: new Date(item.pub_date).toISOString(),
     }))
+  },
+
+  async searchSymbols(query: string): Promise<SymbolSearchResult[] | null> {
+    // /companies?search=X is a full-text match on the whole NGX listing
+    // (151 securities per the market snapshot), not just the ~6 we've
+    // seeded — this is what makes any NGX ticker searchable, not just the
+    // handful already in our DB.
+    const result = await ngnMarketGet<{ data: NgnMarketCompany[] }>(
+      "/companies",
+      { search: query, limit: "8" }
+    )
+    if (!result) return null
+
+    return result.data.map((c) => ({
+      ticker: c.symbol,
+      name: c.name,
+      exchange: "NGX",
+      currency: "NGN",
+      country: "Nigeria",
+      sector: c.sector,
+      assetClass: "stock" as const,
+      source: "ngn_market" as const,
+    }))
+  },
+
+  async resolveSecurity(ticker: string): Promise<ResolvedSecurity | null> {
+    // The search endpoint already returns everything a securities row
+    // needs, so "resolving" one is just re-running it filtered to an exact
+    // symbol match — no separate detail endpoint needed (and the real
+    // detail endpoint is paid-tier only anyway, see file header).
+    const result = await ngnMarketGet<{ data: NgnMarketCompany[] }>(
+      "/companies",
+      { search: ticker, limit: "10" }
+    )
+    const match = result?.data.find((c) => c.symbol === ticker)
+    if (!match) return null
+
+    return {
+      ticker: match.symbol,
+      name: match.name,
+      exchange: "NGX",
+      currency: "NGN",
+      country: "Nigeria",
+      sector: match.sector,
+      assetClass: "stock",
+    }
   },
 }

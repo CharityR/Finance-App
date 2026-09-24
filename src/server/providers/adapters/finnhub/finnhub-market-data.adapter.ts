@@ -3,7 +3,9 @@ import type {
   LiveNewsItem,
   LiveQuote,
   MarketDataProvider,
+  ResolvedSecurity,
   SecurityRef,
+  SymbolSearchResult,
 } from "@/server/providers/ports/market-data.port"
 
 const BASE_URL = "https://finnhub.io/api/v1"
@@ -44,6 +46,19 @@ async function finnhubGet<T>(path: string, params: Record<string, string>) {
 
 // Finnhub covers non-NGX exchanges only; the router decides who gets asked.
 const SUPPORTED_EXCHANGES = new Set(["NASDAQ", "NYSE", "NYSEARCA"])
+
+/** Finnhub's /stock/profile2 returns verbose exchange names ("NASDAQ NMS -
+ * GLOBAL MARKET") — normalize to the short codes SUPPORTED_EXCHANGES (and
+ * the rest of the app) actually use, or the security we create would never
+ * match its own adapter's exchange check. */
+function normalizeExchange(raw: string): string {
+  const upper = raw.toUpperCase()
+  if (upper.includes("ARCA")) return "NYSEARCA"
+  if (upper.includes("NASDAQ")) return "NASDAQ"
+  if (upper.includes("NEW YORK STOCK EXCHANGE") || upper === "NYSE")
+    return "NYSE"
+  return raw
+}
 
 export const finnhubMarketDataAdapter: MarketDataProvider = {
   async getQuote(security: SecurityRef): Promise<LiveQuote | null> {
@@ -96,5 +111,64 @@ export const finnhubMarketDataAdapter: MarketDataProvider = {
       source: item.source,
       publishedAt: new Date(item.datetime * 1000).toISOString(),
     }))
+  },
+
+  async searchSymbols(query: string): Promise<SymbolSearchResult[] | null> {
+    type FinnhubSearchResult = {
+      symbol: string
+      description: string
+      type: string
+    }
+
+    const result = await finnhubGet<{
+      count: number
+      result: FinnhubSearchResult[]
+    }>("/search", { q: query })
+    if (!result) return null
+
+    // Plain tickers only (no "TSLA.MX", "BRK.A"-style suffixes/dots) — cheap
+    // filter to avoid surfacing every regional listing/warrant variant of
+    // the same company ahead of the one a user actually means.
+    return result.result
+      .filter((r) => /^[A-Z]+$/.test(r.symbol))
+      .slice(0, 8)
+      .map((r) => ({
+        ticker: r.symbol,
+        name: r.description,
+        // Not known until resolveSecurity() — a full profile fetch per
+        // search-as-you-type keystroke isn't worth the extra API calls.
+        exchange: null,
+        currency: null,
+        country: null,
+        sector: null,
+        assetClass: /etf|etp/i.test(r.type) ? "etf" : null,
+        source: "finnhub" as const,
+      }))
+  },
+
+  async resolveSecurity(ticker: string): Promise<ResolvedSecurity | null> {
+    type FinnhubProfile = {
+      ticker: string
+      name: string
+      exchange: string
+      currency: string
+      country: string
+      finnhubIndustry: string | null
+    }
+
+    const profile = await finnhubGet<FinnhubProfile>("/stock/profile2", {
+      symbol: ticker,
+    })
+    if (!profile || !profile.name) return null
+
+    return {
+      ticker: profile.ticker,
+      name: profile.name,
+      exchange: normalizeExchange(profile.exchange),
+      currency: profile.currency,
+      country: profile.country,
+      sector: profile.finnhubIndustry,
+      assetClass: "stock",
+    }
   },
 }

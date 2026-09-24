@@ -5,38 +5,24 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { addToWatchlistAction } from "@/app/(dashboard)/watchlist/actions"
-import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  SecuritySearchInput,
+  type SelectedSecurity,
+} from "@/components/securities/SecuritySearchInput"
+import { Button } from "@/components/ui/button"
 
-type SecurityOption = { id: string; ticker: string; name: string }
-
-export function WatchlistForm({
-  securities,
-}: {
-  securities: SecurityOption[]
-}) {
+export function WatchlistForm() {
   const router = useRouter()
-  const [securityId, setSecurityId] = useState("")
+  const [security, setSecurity] = useState<SelectedSecurity | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const items = securities.map((s) => ({
-    value: s.id,
-    label: `${s.ticker} — ${s.name}`,
-  }))
-
   async function handleAdd() {
-    if (!securityId) return
+    if (!security) return
     setIsSubmitting(true)
     try {
-      await addToWatchlistAction(securityId)
+      await addToWatchlistAction(security.id)
       toast.success("Added to watchlist")
-      setSecurityId("")
+      setSecurity(null)
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong")
@@ -47,23 +33,10 @@ export function WatchlistForm({
 
   return (
     <div className="flex gap-2">
-      <Select
-        items={items}
-        value={securityId}
-        onValueChange={(value) => value && setSecurityId(value)}
-      >
-        <SelectTrigger className="w-72">
-          <SelectValue placeholder="Search by ticker or name" />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button onClick={handleAdd} disabled={!securityId || isSubmitting}>
+      <div className="w-72">
+        <SecuritySearchInput value={security} onChange={setSecurity} />
+      </div>
+      <Button onClick={handleAdd} disabled={!security || isSubmitting}>
         Add
       </Button>
     </div>

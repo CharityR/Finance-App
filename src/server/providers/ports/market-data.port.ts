@@ -41,10 +41,62 @@ export type LiveNewsItem = {
   publishedAt: string
 }
 
+export type SecurityAssetClass =
+  | "stock"
+  | "etf"
+  | "mutual_fund"
+  | "bond"
+  | "treasury_bill"
+  | "reit"
+  | "gold"
+  | "other"
+
+/**
+ * A symbol search hit. NGN Market's search endpoint returns everything
+ * needed to create a securities row in one call, so `exchange`/`currency`/
+ * `country`/`sector`/`assetClass` are populated immediately; Finnhub's
+ * /search endpoint only returns ticker+name+type, so those fields are null
+ * until resolveSecurity() looks the symbol up individually — searching is
+ * cheap and can run on every keystroke, a full profile fetch isn't, so it's
+ * deferred to the moment a user actually picks a result.
+ */
+export type SymbolSearchResult = {
+  ticker: string
+  name: string
+  exchange: string | null
+  currency: string | null
+  country: string | null
+  sector: string | null
+  assetClass: SecurityAssetClass | null
+  /** Which adapter found this — carried back to resolveSecurity() so it
+   * knows which provider to ask, without the caller needing to guess from
+   * the ticker alone. */
+  source: "finnhub" | "ngn_market"
+}
+
+export type ResolvedSecurity = {
+  ticker: string
+  name: string
+  exchange: string
+  currency: string
+  country: string
+  sector: string | null
+  assetClass: SecurityAssetClass
+}
+
 export interface MarketDataProvider {
   getQuote(security: SecurityRef): Promise<LiveQuote | null>
   getCompanyNews(
     security: SecurityRef,
     limit?: number
   ): Promise<LiveNewsItem[] | null>
+  /** Free-text symbol/name search across this provider's universe — not
+   * limited to securities already seeded in our DB. Returns [] (not null)
+   * when the provider works but has no matches, since that's a real,
+   * meaningful answer distinct from "this provider is unavailable." */
+  searchSymbols(query: string): Promise<SymbolSearchResult[] | null>
+  /** Full profile lookup for one ticker this provider previously found via
+   * searchSymbols — called once, right before inserting a new securities
+   * row, not on every keystroke. */
+  resolveSecurity(ticker: string): Promise<ResolvedSecurity | null>
 }

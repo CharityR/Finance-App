@@ -8,6 +8,10 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { addHoldingAction } from "@/app/(dashboard)/investments/actions"
+import {
+  SecuritySearchInput,
+  type SelectedSecurity,
+} from "@/components/securities/SecuritySearchInput"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,23 +30,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
-type SecurityOption = {
-  id: string
-  ticker: string
-  name: string
-  currency: string
-}
+import { Label } from "@/components/ui/label"
 
 const holdingFormSchema = z.object({
-  securityId: z.string().uuid("Choose a security"),
   quantity: z
     .string()
     .min(1, "Quantity is required")
@@ -54,37 +44,30 @@ const holdingFormSchema = z.object({
 })
 type HoldingFormValues = z.infer<typeof holdingFormSchema>
 
-export function HoldingForm({
-  securities,
-  trigger,
-}: {
-  securities: SecurityOption[]
-  trigger: React.ReactElement
-}) {
+export function HoldingForm({ trigger }: { trigger: React.ReactElement }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [security, setSecurity] = useState<SelectedSecurity | null>(null)
 
   const form = useForm<HoldingFormValues>({
     resolver: zodResolver(holdingFormSchema),
-    defaultValues: { securityId: "", quantity: "", purchasePrice: "" },
+    defaultValues: { quantity: "", purchasePrice: "" },
   })
 
-  const securityItems = securities.map((s) => ({
-    value: s.id,
-    label: `${s.ticker} — ${s.name}`,
-  }))
-  const selectedId = form.watch("securityId")
-  const selectedSecurity = securities.find((s) => s.id === selectedId)
-
   async function onSubmit(values: HoldingFormValues) {
+    if (!security) {
+      toast.error("Choose a security first")
+      return
+    }
     try {
       await addHoldingAction({
-        securityId: values.securityId,
+        securityId: security.id,
         quantity: Number(values.quantity),
         purchasePrice: Number(values.purchasePrice),
       })
       toast.success("Holding added")
-      form.reset({ securityId: "", quantity: "", purchasePrice: "" })
+      form.reset({ quantity: "", purchasePrice: "" })
+      setSecurity(null)
       setOpen(false)
       router.refresh()
     } catch (err) {
@@ -93,7 +76,13 @@ export function HoldingForm({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setSecurity(null)
+      }}
+    >
       <DialogTrigger render={trigger} />
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
@@ -101,32 +90,10 @@ export function HoldingForm({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="securityId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Security</FormLabel>
-                  <Select
-                    items={securityItems}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Search by ticker or name" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {securityItems.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <Label>Security</Label>
+              <SecuritySearchInput value={security} onChange={setSecurity} />
+            </div>
             <FormField
               control={form.control}
               name="quantity"
@@ -147,7 +114,7 @@ export function HoldingForm({
                 <FormItem>
                   <FormLabel>
                     Purchase price per share
-                    {selectedSecurity ? ` (${selectedSecurity.currency})` : ""}
+                    {security ? ` (${security.currency})` : ""}
                   </FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" min="0" {...field} />

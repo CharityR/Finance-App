@@ -32,6 +32,39 @@ export async function getSecurityByTicker(ticker: string) {
   })
 }
 
+/**
+ * Get-or-create by (ticker, exchange) — the same unique index that already
+ * prevents seed-data duplicates. Used when a user picks a live search
+ * result (e.g. Tesla) that isn't one of the pre-seeded fixtures yet;
+ * isMock: false marks it as a real, provider-resolved security rather than
+ * fixture data, so it doesn't get the "Mock data" badge on its detail page.
+ */
+export async function upsertSecurity(details: {
+  ticker: string
+  name: string
+  exchange: string
+  currency: string
+  country: string
+  sector: string | null
+  assetClass: (typeof schema.assetClassEnum.enumValues)[number]
+}) {
+  const [row] = await db
+    .insert(schema.securities)
+    .values({ ...details, isMock: false })
+    .onConflictDoUpdate({
+      target: [schema.securities.ticker, schema.securities.exchange],
+      set: {
+        name: details.name,
+        sector: details.sector,
+        country: details.country,
+        currency: details.currency,
+      },
+    })
+    .returning()
+
+  return row
+}
+
 export async function getLatestPrice(securityId: string) {
   return db.query.priceSnapshots.findFirst({
     where: eq(schema.priceSnapshots.securityId, securityId),

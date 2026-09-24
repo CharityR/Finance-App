@@ -5,7 +5,9 @@ import type {
   LiveNewsItem,
   LiveQuote,
   MarketDataProvider,
+  ResolvedSecurity,
   SecurityRef,
+  SymbolSearchResult,
 } from "@/server/providers/ports/market-data.port"
 
 /**
@@ -67,5 +69,16 @@ export const mockMarketDataAdapter: MarketDataProvider = {
       source: item.source,
       publishedAt: item.publishedAt.toISOString(),
     }))
+  },
+
+  // The mock adapter has no "universe" beyond the seeded rows a plain DB
+  // search already covers (securities.service.ts checks the DB itself) —
+  // nothing new for it to search or resolve.
+  async searchSymbols(): Promise<SymbolSearchResult[] | null> {
+    return null
+  },
+
+  async resolveSecurity(): Promise<ResolvedSecurity | null> {
+    return null
   },
 }

@@ -6,7 +6,9 @@ import type {
   LiveNewsItem,
   LiveQuote,
   MarketDataProvider,
+  ResolvedSecurity,
   SecurityRef,
+  SymbolSearchResult,
 } from "@/server/providers/ports/market-data.port"
 import * as providerCacheRepo from "@/server/repositories/provider-cache.repository"
 
@@ -96,4 +98,46 @@ export const marketDataProvider: MarketDataProvider = {
       adapter.getCompanyNews(security, limit)
     )
   },
+
+  // Unused directly — search/resolve aren't tied to one security's
+  // exchange (that's the whole point, we don't know it yet), so they're
+  // exposed as the standalone functions below instead of through this
+  // per-security-routed object. Present here only to satisfy the
+  // MarketDataProvider interface each adapter implements.
+  searchSymbols: () => Promise.resolve(null),
+  resolveSecurity: () => Promise.resolve(null),
+}
+
+/**
+ * Searches every live provider's full universe in parallel (not just
+ * securities already in our DB) — this is what lets a user find "Tesla" or
+ * any other real ticker instead of only the ~15 seeded fixtures. No-ops to
+ * [] in mock mode or for an empty query rather than hitting either API.
+ */
+export async function searchSecuritiesAcrossProviders(
+  query: string
+): Promise<SymbolSearchResult[]> {
+  if (serverEnv.PROVIDER_MODE !== "live" || !query.trim()) return []
+
+  const [ngnResults, finnhubResults] = await Promise.all([
+    ngnMarketMarketDataAdapter.searchSymbols(query).catch(() => null),
+    finnhubMarketDataAdapter.searchSymbols(query).catch(() => null),
+  ])
+
+  return [...(ngnResults ?? []), ...(finnhubResults ?? [])]
+}
+
+/** Full profile lookup for one search result the user actually picked,
+ * right before it's inserted as a new securities row — see
+ * SymbolSearchResult.source on why the caller already knows which
+ * adapter to ask. */
+export async function resolveSecurityFromProvider(
+  source: "finnhub" | "ngn_market",
+  ticker: string
+): Promise<ResolvedSecurity | null> {
+  if (serverEnv.PROVIDER_MODE !== "live") return null
+
+  const adapter =
+    source === "finnhub" ? finnhubMarketDataAdapter : ngnMarketMarketDataAdapter
+  return adapter.resolveSecurity(ticker).catch(() => null)
 }

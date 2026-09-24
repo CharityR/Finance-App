@@ -38,6 +38,45 @@ service, or component changes.
 `PROVIDER_MODE=mock` (the default) skips all of this and behaves exactly as
 before Phase 8 — set `PROVIDER_MODE=live` plus both API keys to enable it.
 
+## Symbol search & resolve
+
+Adding a holding or watchlist item used to only search the ~15 securities
+already seeded in the DB — a real ticker like TSLA or an NGX name outside the
+6 seeded fixtures (e.g. Airtel Africa) simply wouldn't show up. The port now
+has two more methods that fix this:
+
+- `searchSymbols(query)` — lightweight `{ticker, name, exchange, source}`
+  results for search-as-you-type. Mock adapter returns nothing (it has no
+  external catalog); Finnhub uses `GET /search`; NGN Market reuses
+  `GET /companies?search=` (same endpoint as quotes, since it already returns
+  full details).
+- `resolveSecurity(ticker)` — fetches full details for one ticker so a
+  `securities` row can be created. Finnhub calls `/search` then
+  `/stock/profile2` (normalizing verbose exchange strings like
+  `"NASDAQ NMS - GLOBAL MARKET"` down to the adapter's own canonical
+  `SUPPORTED_EXCHANGES` codes); NGN Market's `/companies?search=` already
+  returns everything needed in one call.
+
+`src/server/services/securities.service.ts` ties this together:
+`searchSecurities` merges local DB matches with live results from both
+providers (live-only results carry `id: null` and are badged "Add" in the
+UI); `resolveOrCreateSecurity` calls `resolveSecurity` on the right provider
+and upserts a `securities` row (`isMock: false`) via
+`securitiesRepo.upsertSecurity` (get-or-create by ticker + exchange).
+
+`SecuritySearchInput` (`src/components/securities/SecuritySearchInput.tsx`)
+is the shared debounced (300ms) combobox both `HoldingForm` and
+`WatchlistForm` use — picking a live-only result resolves and creates the
+security on the spot before finalizing the pick. Verified live for both
+providers: TSLA (Finnhub, not previously seeded) and AIRTELAFRI (NGN Market,
+not previously seeded) both search, resolve, and price correctly through
+this path.
+
+Search itself isn't cached (`provider_cache` only covers quotes/news) — it's
+a lighter, less frequent call than a quote refresh, so this hasn't been a
+problem against either provider's rate limit yet. Worth revisiting if usage
+grows.
+
 ## What's actually live right now
 
 | Feature                    | NGX securities | International securities |

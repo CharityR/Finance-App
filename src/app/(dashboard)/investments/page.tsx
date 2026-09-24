@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import * as securitiesRepo from "@/server/repositories/securities.repository"
 import * as dividendIncomeService from "@/server/services/dividend-income.service"
 import * as holdingsService from "@/server/services/holdings.service"
 import * as newsService from "@/server/services/news.service"
@@ -30,23 +29,14 @@ export default async function InvestmentsPage() {
     portfolioByCurrency,
     netWorthBreakdown,
     dividendIncome,
-    securities,
     news,
   ] = await Promise.all([
     holdingsService.listHoldingsWithValuation(user.id),
     portfolioService.getPortfolioSummary(user.id),
     portfolioService.getNetWorthBreakdown(user.id),
     dividendIncomeService.getEstimatedAnnualIncome(user.id),
-    securitiesRepo.searchSecurities(""),
     newsService.getRelevantNews(user.id),
   ])
-
-  const securityOptions = securities.map((s) => ({
-    id: s.id,
-    ticker: s.ticker,
-    name: s.name,
-    currency: s.currency,
-  }))
 
   return (
     <div className="space-y-6">
@@ -57,10 +47,7 @@ export default async function InvestmentsPage() {
             Track your holdings and allocation. Prices are mock data for now.
           </p>
         </div>
-        <HoldingForm
-          securities={securityOptions}
-          trigger={<Button>Add holding</Button>}
-        />
+        <HoldingForm trigger={<Button>Add holding</Button>} />
       </div>
 
       <Card>
