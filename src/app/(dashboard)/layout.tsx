@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { NotificationBell } from "@/components/layout/NotificationBell"
 import { SidebarNav } from "@/components/layout/sidebar-nav"
+import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
 import * as notificationsService from "@/server/services/notifications.service"
 import { getCurrentUser } from "@/server/supabase/server"
@@ -61,7 +62,8 @@ export default async function DashboardLayout({
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-6xl justify-end px-6 pt-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-end gap-1 px-6 pt-4">
+          <ThemeToggle />
           <NotificationBell
             initialNotifications={notifications}
             initialUnreadCount={unreadCount}

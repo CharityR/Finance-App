@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
 
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { DEFAULT_THEME_PALETTE } from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import { getCurrentUser } from "@/server/supabase/server"
@@ -22,7 +24,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-theme={themePalette}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
