@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EditHoldingDialog } from "@/components/investments/EditHoldingDialog"
 import {
   Table,
   TableBody,
@@ -69,7 +70,7 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
             <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-right">Value</TableHead>
             <TableHead className="text-right">Gain/Loss</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,38 +124,57 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
                 </div>
               </TableCell>
               <TableCell>
-                <AlertDialog
-                  open={openDeleteId === h.id}
-                  onOpenChange={(open) => setOpenDeleteId(open ? h.id : null)}
-                >
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={isPending}
-                      >
-                        <span className="sr-only">Remove</span>
-                        <Trash2 />
+                <div className="flex justify-end gap-1">
+                  <EditHoldingDialog
+                    holding={{
+                      id: h.id,
+                      ticker: h.ticker,
+                      quantity: h.quantity,
+                      averageCostBasis: h.averageCostBasis,
+                      currency: h.currency,
+                    }}
+                    trigger={
+                      <Button variant="ghost" size="icon-sm">
+                        <span className="sr-only">Edit</span>
+                        <Pencil />
                       </Button>
                     }
                   />
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Remove this holding?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {h.ticker} ({h.quantity.toLocaleString()} shares) will
-                        be removed from your portfolio.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRemove(h.id)}>
-                        Remove
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                  <AlertDialog
+                    open={openDeleteId === h.id}
+                    onOpenChange={(open) => setOpenDeleteId(open ? h.id : null)}
+                  >
+                    <AlertDialogTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={isPending}
+                        >
+                          <span className="sr-only">Remove</span>
+                          <Trash2 />
+                        </Button>
+                      }
+                    />
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Remove this holding?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {h.ticker} ({h.quantity.toLocaleString()} shares) will
+                          be removed from your portfolio.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleRemove(h.id)}>
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))}

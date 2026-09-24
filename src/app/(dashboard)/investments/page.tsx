@@ -4,10 +4,16 @@ import { AllocationChart } from "@/components/investments/AllocationChart"
 import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
 import { HoldingForm } from "@/components/investments/HoldingForm"
 import { HoldingsTable } from "@/components/investments/HoldingsTable"
+import { NetWorthExplorer } from "@/components/investments/NetWorthExplorer"
 import { NewsFeed } from "@/components/investments/NewsFeed"
 import { PortfolioSummaryCard } from "@/components/investments/PortfolioSummaryCard"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import * as securitiesRepo from "@/server/repositories/securities.repository"
 import * as dividendIncomeService from "@/server/services/dividend-income.service"
 import * as holdingsService from "@/server/services/holdings.service"
@@ -19,14 +25,21 @@ export default async function InvestmentsPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const [holdings, portfolioByCurrency, dividendIncome, securities, news] =
-    await Promise.all([
-      holdingsService.listHoldingsWithValuation(user.id),
-      portfolioService.getPortfolioSummary(user.id),
-      dividendIncomeService.getEstimatedAnnualIncome(user.id),
-      securitiesRepo.searchSecurities(""),
-      newsService.getRelevantNews(user.id),
-    ])
+  const [
+    holdings,
+    portfolioByCurrency,
+    netWorthBreakdown,
+    dividendIncome,
+    securities,
+    news,
+  ] = await Promise.all([
+    holdingsService.listHoldingsWithValuation(user.id),
+    portfolioService.getPortfolioSummary(user.id),
+    portfolioService.getNetWorthBreakdown(user.id),
+    dividendIncomeService.getEstimatedAnnualIncome(user.id),
+    securitiesRepo.searchSecurities(""),
+    newsService.getRelevantNews(user.id),
+  ])
 
   const securityOptions = securities.map((s) => ({
     id: s.id,
@@ -50,35 +63,30 @@ export default async function InvestmentsPage() {
         />
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Net worth explorer</CardTitle>
+          <CardDescription>
+            Start at your total value, then click through to see which countries
+            and sectors it&apos;s invested in.
+          </CardDescription>
+        </CardHeader>
+        <div className="px-6 pb-6">
+          <NetWorthExplorer breakdown={netWorthBreakdown} />
+        </div>
+      </Card>
+
       {portfolioByCurrency.map((summary) => (
         <div key={summary.currency} className="space-y-4">
           <PortfolioSummaryCard summary={summary} currency={summary.currency} />
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Asset allocation ({summary.currency})
-                </CardTitle>
-              </CardHeader>
-              <AllocationChart slices={summary.assetClassAllocation} />
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Sector allocation ({summary.currency})
-                </CardTitle>
-              </CardHeader>
-              <AllocationChart slices={summary.sectorAllocation} />
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  Geographic exposure ({summary.currency})
-                </CardTitle>
-              </CardHeader>
-              <AllocationChart slices={summary.geographicAllocation} />
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">
+                Asset allocation ({summary.currency})
+              </CardTitle>
+            </CardHeader>
+            <AllocationChart slices={summary.assetClassAllocation} />
+          </Card>
         </div>
       ))}
 
