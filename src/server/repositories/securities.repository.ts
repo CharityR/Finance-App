@@ -1,6 +1,7 @@
 import { desc, eq, ilike, or } from "drizzle-orm"
 
 import { db, schema } from "@/server/db"
+import { marketDataProvider } from "@/server/providers/market-data-provider"
 
 export async function searchSecurities(query: string) {
   if (!query.trim()) {
@@ -38,22 +39,47 @@ export async function getLatestPrice(securityId: string) {
   })
 }
 
-/** Latest price per security, in one query rather than N. */
-export async function getLatestPrices(securityIds: string[]) {
-  if (securityIds.length === 0) return new Map()
+export type LatestPriceInfo = {
+  price: number
+  changePercent: number | null
+  fetchedAt: Date
+  provenance: "current" | "estimated"
+}
 
-  const rows = await db.query.priceSnapshots.findMany({
-    where: (p, { inArray }) => inArray(p.securityId, securityIds),
-    orderBy: [desc(schema.priceSnapshots.fetchedAt)],
-  })
+/**
+ * Latest price per security. Goes through marketDataProvider (live Finnhub/
+ * NGN Market quotes when PROVIDER_MODE=live, falling back to the seeded
+ * price_snapshot table otherwise) — this repository is the only place that
+ * knows a live provider exists; holdings.service.ts and watchlist.service.ts
+ * just get a price back, unaware of where it came from.
+ */
+export async function getLatestPrices(
+  securities: {
+    id: string
+    ticker: string
+    exchange: string
+    currency: string
+  }[]
+): Promise<Map<string, LatestPriceInfo>> {
+  if (securities.length === 0) return new Map()
 
-  const latestBySecurity = new Map<string, (typeof rows)[number]>()
-  for (const row of rows) {
-    if (!latestBySecurity.has(row.securityId)) {
-      latestBySecurity.set(row.securityId, row)
-    }
-  }
-  return latestBySecurity
+  const results = await Promise.all(
+    securities.map(async (security) => {
+      const quote = await marketDataProvider.getQuote(security)
+      if (!quote) return null
+      return [
+        security.id,
+        {
+          price: quote.price,
+          changePercent: quote.changePercent,
+          fetchedAt: new Date(quote.asOf),
+          provenance: quote.source === "mock" ? "estimated" : "current",
+        } satisfies LatestPriceInfo,
+      ] as const
+    })
+  )
+
+  return new Map(results.filter((r): r is NonNullable<typeof r> => r !== null))
 }
 
 export async function getPriceHistory(securityId: string, limit = 30) {

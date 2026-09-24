@@ -96,7 +96,7 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
                   <div>
                     {formatMoney(h.currentPrice, h.currency)}
                     <Badge variant="outline" className="ml-1.5">
-                      Current
+                      {h.priceProvenance === "current" ? "Live" : "Estimated"}
                     </Badge>
                   </div>
                 ) : (

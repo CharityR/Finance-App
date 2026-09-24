@@ -16,6 +16,7 @@ export type HoldingValuation = {
   currency: string
   currentPrice: number | null
   priceAsOf: string | null
+  priceProvenance: "current" | "estimated" | null
   currentValue: number
   costBasis: number
   gainLoss: number
@@ -27,15 +28,20 @@ export async function listHoldingsWithValuation(
 ): Promise<HoldingValuation[]> {
   const holdings = await holdingsRepo.listHoldings(userId)
   const latestPrices = await securitiesRepo.getLatestPrices(
-    holdings.map((h) => h.securityId)
+    holdings.map((h) => ({
+      id: h.securityId,
+      ticker: h.security.ticker,
+      exchange: h.security.exchange,
+      currency: h.currency,
+    }))
   )
 
   return holdings.map((h) => {
     const quantity = Number(h.quantity)
     const averageCostBasis = Number(h.averageCostBasis)
     const costBasis = quantity * averageCostBasis
-    const priceSnapshot = latestPrices.get(h.securityId)
-    const currentPrice = priceSnapshot ? Number(priceSnapshot.price) : null
+    const priceInfo = latestPrices.get(h.securityId)
+    const currentPrice = priceInfo?.price ?? null
     const currentValue =
       currentPrice !== null ? quantity * currentPrice : costBasis
     const gainLoss = currentValue - costBasis
@@ -54,7 +60,8 @@ export async function listHoldingsWithValuation(
       averageCostBasis,
       currency: h.currency,
       currentPrice,
-      priceAsOf: priceSnapshot?.fetchedAt.toISOString() ?? null,
+      priceAsOf: priceInfo?.fetchedAt.toISOString() ?? null,
+      priceProvenance: priceInfo?.provenance ?? null,
       currentValue,
       costBasis,
       gainLoss,

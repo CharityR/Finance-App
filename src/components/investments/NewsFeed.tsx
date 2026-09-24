@@ -9,6 +9,7 @@ export type NewsFeedItem = {
   publishedAt: string | Date
   security?: { ticker: string } | null
   sector?: string | null
+  provenance?: "current" | "estimated"
 }
 
 export function NewsFeed({ items }: { items: NewsFeedItem[] }) {
@@ -30,7 +31,7 @@ export function NewsFeed({ items }: { items: NewsFeedItem[] }) {
                 {item.headline}
               </CardTitle>
               <Badge variant="outline" className="shrink-0">
-                Sample data
+                {item.provenance === "current" ? "Live" : "Sample data"}
               </Badge>
             </div>
           </CardHeader>

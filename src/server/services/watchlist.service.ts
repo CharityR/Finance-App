@@ -22,33 +22,31 @@ export async function listWatchlistWithPrices(
   userId: string
 ): Promise<WatchlistItemWithPrice[]> {
   const items = await watchlistRepo.listWatchlist(userId)
-
-  return Promise.all(
-    items.map(async (item) => {
-      const history = await securitiesRepo.getPriceHistory(item.securityId, 2)
-      const [latest, previous] = history
-      const currentPrice = latest ? Number(latest.price) : null
-      const priceChangePercent =
-        latest && previous && Number(previous.price) > 0
-          ? ((Number(latest.price) - Number(previous.price)) /
-              Number(previous.price)) *
-            100
-          : null
-
-      return {
-        id: item.id,
-        securityId: item.securityId,
-        ticker: item.security.ticker,
-        name: item.security.name,
-        assetClass: item.security.assetClass,
-        sector: item.security.sector,
-        country: item.security.country,
-        currency: item.security.currency,
-        currentPrice,
-        priceChangePercent,
-      }
-    })
+  const latestPrices = await securitiesRepo.getLatestPrices(
+    items.map((item) => ({
+      id: item.securityId,
+      ticker: item.security.ticker,
+      exchange: item.security.exchange,
+      currency: item.security.currency,
+    }))
   )
+
+  return items.map((item) => {
+    const priceInfo = latestPrices.get(item.securityId)
+
+    return {
+      id: item.id,
+      securityId: item.securityId,
+      ticker: item.security.ticker,
+      name: item.security.name,
+      assetClass: item.security.assetClass,
+      sector: item.security.sector,
+      country: item.security.country,
+      currency: item.security.currency,
+      currentPrice: priceInfo?.price ?? null,
+      priceChangePercent: priceInfo?.changePercent ?? null,
+    }
+  })
 }
 
 export async function addToWatchlist(userId: string, securityId: string) {

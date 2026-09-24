@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { formatMoney } from "@/lib/money"
-import * as newsRepo from "@/server/repositories/news.repository"
+import * as newsService from "@/server/services/news.service"
 import * as securitiesRepo from "@/server/repositories/securities.repository"
 import { getCurrentUser } from "@/server/supabase/server"
 
@@ -27,13 +27,29 @@ export default async function CompanyDetailPage({
   const security = await securitiesRepo.getSecurityByTicker(ticker)
   if (!security) notFound()
 
-  const [priceHistory, dividendHistory, news] = await Promise.all([
+  const [priceHistory, dividendHistory, news, latestQuote] = await Promise.all([
     securitiesRepo.getPriceHistory(security.id, 10),
     securitiesRepo.getDividendHistory(security.id),
-    newsRepo.getNewsForSecurity(security.id, security.sector),
+    newsService.getNewsForSecurity({
+      id: security.id,
+      ticker: security.ticker,
+      exchange: security.exchange,
+      currency: security.currency,
+      sector: security.sector,
+    }),
+    securitiesRepo.getLatestPrices([
+      {
+        id: security.id,
+        ticker: security.ticker,
+        exchange: security.exchange,
+        currency: security.currency,
+      },
+    ]),
   ])
 
-  const latestPrice = priceHistory[0] ? Number(priceHistory[0].price) : null
+  const priceInfo = latestQuote.get(security.id)
+  const latestPrice =
+    priceInfo?.price ?? (priceHistory[0] ? Number(priceHistory[0].price) : null)
 
   return (
     <div className="space-y-6">
@@ -61,7 +77,9 @@ export default async function CompanyDetailPage({
                 ? formatMoney(latestPrice, security.currency)
                 : "—"}
             </div>
-            <p className="text-muted-foreground mt-1 text-xs">Current</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {priceInfo?.provenance === "current" ? "Live" : "Estimated"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -136,9 +154,7 @@ export default async function CompanyDetailPage({
         <h2 className="mb-3 text-lg font-semibold tracking-tight">
           Related news
         </h2>
-        <NewsFeed
-          items={news.map((n) => ({ ...n, security: null, sector: n.sector }))}
-        />
+        <NewsFeed items={news} />
       </div>
     </div>
   )

@@ -14,6 +14,11 @@ const serverEnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DIRECT_URL: z.string().min(1),
   PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
+  // Only required when PROVIDER_MODE=live — see
+  // src/server/providers/market-data-provider.ts, which no-ops (falls back
+  // to mock) if a key is missing rather than failing to build/boot.
+  FINNHUB_API_KEY: z.string().optional(),
+  NGN_MARKET_API_KEY: z.string().optional(),
 })
 
 export const serverEnv = {
@@ -23,5 +28,7 @@ export const serverEnv = {
     DATABASE_URL: process.env.DATABASE_URL,
     DIRECT_URL: process.env.DIRECT_URL,
     PROVIDER_MODE: process.env.PROVIDER_MODE,
+    FINNHUB_API_KEY: process.env.FINNHUB_API_KEY,
+    NGN_MARKET_API_KEY: process.env.NGN_MARKET_API_KEY,
   }),
 }
