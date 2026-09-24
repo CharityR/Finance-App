@@ -1,6 +1,7 @@
 import { Download } from "lucide-react"
 import { redirect } from "next/navigation"
 
+import { ManageCategoriesDialog } from "@/components/transactions/ManageCategoriesDialog"
 import { TransactionFilters } from "@/components/transactions/TransactionFilters"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { TransactionTable } from "@/components/transactions/TransactionTable"
@@ -56,6 +57,7 @@ export default async function TransactionsPage({
           </p>
         </div>
         <div className="flex gap-2">
+          <ManageCategoriesDialog categories={categories} />
           <Button
             variant="outline"
             nativeButton={false}

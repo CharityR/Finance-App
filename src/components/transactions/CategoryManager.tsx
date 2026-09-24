@@ -12,7 +12,7 @@ import {
   createCategoryAction,
   deleteCategoryAction,
   updateCategoryAction,
-} from "@/app/(dashboard)/settings/actions"
+} from "@/app/(dashboard)/transactions/actions"
 import {
   AlertDialog,
   AlertDialogAction,

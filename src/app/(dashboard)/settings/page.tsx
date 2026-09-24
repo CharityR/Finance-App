@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 
-import { CategoryManager } from "@/components/settings/CategoryManager"
 import { CurrencyForm } from "@/components/settings/CurrencyForm"
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm"
 import { ThemeForm } from "@/components/settings/ThemeForm"
@@ -16,7 +15,6 @@ import {
   type ThemePaletteId,
 } from "@/lib/theme-palettes"
 import { getProfile } from "@/server/repositories/profiles.repository"
-import * as categoriesService from "@/server/services/categories.service"
 import * as notificationsService from "@/server/services/notifications.service"
 import { getCurrentUser } from "@/server/supabase/server"
 
@@ -24,10 +22,9 @@ export default async function SettingsPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const [profile, notificationPreferences, categories] = await Promise.all([
+  const [profile, notificationPreferences] = await Promise.all([
     getProfile(user.id),
     notificationsService.getPreferences(user.id),
-    categoriesService.listCategories(user.id),
   ])
 
   return (
@@ -91,18 +88,6 @@ export default async function SettingsPage() {
               unusualTransaction: notificationPreferences.unusualTransaction,
             }}
           />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Categories</CardTitle>
-          <CardDescription>
-            Add your own income/expense categories, or edit and delete ones
-            you&apos;ve created. Built-in categories can&apos;t be changed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CategoryManager categories={categories} />
         </CardContent>
       </Card>
     </div>
