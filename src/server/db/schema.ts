@@ -504,6 +504,8 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "budget_exceeded",
   "goal_off_track",
   "goal_contribution_logged",
+  "category_spending_trend",
+  "unusual_transaction",
 ])
 
 export const notifications = pgTable(
@@ -539,6 +541,10 @@ export const notificationPreferences = pgTable("notification_preferences", {
   goalContributionLogged: boolean("goal_contribution_logged")
     .notNull()
     .default(false),
+  categorySpendingTrend: boolean("category_spending_trend")
+    .notNull()
+    .default(true),
+  unusualTransaction: boolean("unusual_transaction").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

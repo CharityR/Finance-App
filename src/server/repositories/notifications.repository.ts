@@ -3,18 +3,26 @@ import { and, eq, isNull, sql } from "drizzle-orm"
 import { db, schema } from "@/server/db"
 
 export type NotificationType =
-  "budget_exceeded" | "goal_off_track" | "goal_contribution_logged"
+  | "budget_exceeded"
+  | "goal_off_track"
+  | "goal_contribution_logged"
+  | "category_spending_trend"
+  | "unusual_transaction"
 
 export type NotificationPreferenceFlags = {
   budgetExceeded: boolean
   goalOffTrack: boolean
   goalContributionLogged: boolean
+  categorySpendingTrend: boolean
+  unusualTransaction: boolean
 }
 
 export const DEFAULT_PREFERENCES: NotificationPreferenceFlags = {
   budgetExceeded: true,
   goalOffTrack: true,
   goalContributionLogged: false,
+  categorySpendingTrend: true,
+  unusualTransaction: true,
 }
 
 export async function getPreferences(userId: string) {

@@ -17,6 +17,8 @@ export const updateNotificationPreferencesSchema = z.object({
   budgetExceeded: z.boolean().optional(),
   goalOffTrack: z.boolean().optional(),
   goalContributionLogged: z.boolean().optional(),
+  categorySpendingTrend: z.boolean().optional(),
+  unusualTransaction: z.boolean().optional(),
 })
 export type UpdateNotificationPreferencesInput = z.infer<
   typeof updateNotificationPreferencesSchema

@@ -43,6 +43,13 @@
       "when": 1790118584144,
       "tag": "0005_happy_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790261630276,
+      "tag": "0006_talented_mojo",
+      "breakpoints": true
     }
   ]
 }

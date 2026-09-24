@@ -4,6 +4,7 @@ import {
   Eye,
   LayoutDashboard,
   LineChart,
+  Lightbulb,
   Settings,
   Target,
   TrendingUp,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/investments", label: "Investments", icon: LineChart },
   { href: "/watchlist", label: "Watchlist", icon: Eye },
   { href: "/forecast", label: "Forecast", icon: TrendingUp },
+  { href: "/insights", label: "Insights", icon: Lightbulb },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
 

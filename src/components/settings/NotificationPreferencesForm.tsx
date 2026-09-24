@@ -23,6 +23,17 @@ const TOGGLES = [
     label: "Contribution logged",
     description: "Every time you log a manual contribution to a goal.",
   },
+  {
+    key: "categorySpendingTrend",
+    label: "Spending trend",
+    description: "When a category runs well above your recent average.",
+  },
+  {
+    key: "unusualTransaction",
+    label: "Unusual transaction",
+    description:
+      "When an expense is much larger than typical for its category.",
+  },
 ] as const
 
 type PreferenceKey = (typeof TOGGLES)[number]["key"]

@@ -4,6 +4,7 @@ import { getOrCreateDefaultAccount } from "@/server/repositories/accounts.reposi
 import { getCategoryById } from "@/server/repositories/categories.repository"
 import * as repo from "@/server/repositories/transactions.repository"
 import * as budgetsService from "@/server/services/budgets.service"
+import * as insightsService from "@/server/services/insights.service"
 import type {
   CreateTransactionInput,
   ListTransactionsQuery,
@@ -22,6 +23,16 @@ export async function createTransaction(
   input: CreateTransactionInput
 ) {
   const account = await getOrCreateDefaultAccount(userId, input.currency)
+
+  // Computed before the insert so it compares this amount against prior
+  // history only, not against itself.
+  const unusualCheck =
+    input.type === "expense" && input.categoryId
+      ? insightsService.checkUnusualAmount(
+          input.amount,
+          await repo.getCategoryExpenseStats(userId, input.categoryId)
+        )
+      : null
 
   const created = await repo.createTransaction({
     userId,
@@ -42,19 +53,47 @@ export async function createTransaction(
   })
 
   if (input.type === "expense" && input.categoryId) {
+    const category = await getCategoryById(input.categoryId)
+    const categoryName = category?.name ?? "this category"
+
     const overspend = await budgetsService.checkCategoryOverspend(
       userId,
       input.categoryId,
       input.occurredAt
     )
     if (overspend) {
-      const category = await getCategoryById(input.categoryId)
       await emitEvent("budget.exceeded", {
         userId,
         entityId: input.categoryId,
-        categoryName: category?.name ?? "this category",
+        categoryName,
         currency: input.currency,
         ...overspend,
+      })
+    }
+
+    if (unusualCheck) {
+      await emitEvent("transaction.unusual_amount", {
+        userId,
+        entityId: created.id,
+        categoryName,
+        currency: input.currency,
+        ...unusualCheck,
+      })
+    }
+
+    const trend = await insightsService.checkCategorySpendingTrend(
+      userId,
+      input.categoryId,
+      input.occurredAt,
+      input.amount
+    )
+    if (trend) {
+      await emitEvent("category.spending_trend", {
+        userId,
+        entityId: input.categoryId,
+        categoryName,
+        currency: input.currency,
+        ...trend,
       })
     }
   }

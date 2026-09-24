@@ -86,6 +86,9 @@ export default async function SettingsPage() {
               goalOffTrack: notificationPreferences.goalOffTrack,
               goalContributionLogged:
                 notificationPreferences.goalContributionLogged,
+              categorySpendingTrend:
+                notificationPreferences.categorySpendingTrend,
+              unusualTransaction: notificationPreferences.unusualTransaction,
             }}
           />
         </CardContent>

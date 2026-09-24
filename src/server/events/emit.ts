@@ -12,7 +12,11 @@ import * as notificationsRepo from "@/server/repositories/notifications.reposito
 import type { NotificationType } from "@/server/repositories/notifications.repository"
 
 export type DomainEventType =
-  "budget.exceeded" | "goal.contribution_logged" | "goal.off_track"
+  | "budget.exceeded"
+  | "goal.contribution_logged"
+  | "goal.off_track"
+  | "category.spending_trend"
+  | "transaction.unusual_amount"
 
 type EventPayload = { userId: string; entityId?: string } & Record<
   string,
@@ -23,6 +27,8 @@ const NOTIFICATION_TYPE: Record<DomainEventType, NotificationType> = {
   "budget.exceeded": "budget_exceeded",
   "goal.off_track": "goal_off_track",
   "goal.contribution_logged": "goal_contribution_logged",
+  "category.spending_trend": "category_spending_trend",
+  "transaction.unusual_amount": "unusual_transaction",
 }
 
 const PREFERENCE_KEY: Record<
@@ -32,6 +38,8 @@ const PREFERENCE_KEY: Record<
   "budget.exceeded": "budgetExceeded",
   "goal.off_track": "goalOffTrack",
   "goal.contribution_logged": "goalContributionLogged",
+  "category.spending_trend": "categorySpendingTrend",
+  "transaction.unusual_amount": "unusualTransaction",
 }
 
 function buildNotificationContent(
@@ -71,6 +79,32 @@ function buildNotificationContent(
       return {
         title: "Contribution logged",
         body: `You added ${formatMoney(amount, currency)} to "${goalName}".`,
+      }
+    }
+    case "category.spending_trend": {
+      const { categoryName, percentAbove, currency, current } =
+        payload as unknown as {
+          categoryName: string
+          percentAbove: number
+          currency: string
+          current: number
+        }
+      return {
+        title: "Spending trend",
+        body: `You've spent ${formatMoney(current, currency)} on ${categoryName} this month — ${Math.round(percentAbove)}% above your recent average.`,
+      }
+    }
+    case "transaction.unusual_amount": {
+      const { categoryName, amount, currency, multiple } =
+        payload as unknown as {
+          categoryName: string
+          amount: number
+          currency: string
+          multiple: number
+        }
+      return {
+        title: "Unusual transaction",
+        body: `${formatMoney(amount, currency)} in ${categoryName} is about ${multiple.toFixed(1)}x your typical spend in that category.`,
       }
     }
   }

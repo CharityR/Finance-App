@@ -1,3 +1,4 @@
+import { Download } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { TransactionFilters } from "@/components/transactions/TransactionFilters"
@@ -37,6 +38,12 @@ export default async function TransactionsPage({
     type: c.type,
   }))
 
+  const exportQuery = new URLSearchParams()
+  if (filters.type) exportQuery.set("type", filters.type)
+  if (filters.categoryId) exportQuery.set("categoryId", filters.categoryId)
+  if (filters.search) exportQuery.set("search", filters.search)
+  exportQuery.set("sort", filters.sort)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -48,10 +55,21 @@ export default async function TransactionsPage({
             Track your income and expenses.
           </p>
         </div>
-        <TransactionForm
-          categories={categoryOptions}
-          trigger={<Button>Add transaction</Button>}
-        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <a href={`/api/v1/transactions/export?${exportQuery}`} download />
+            }
+          >
+            <Download /> Export CSV
+          </Button>
+          <TransactionForm
+            categories={categoryOptions}
+            trigger={<Button>Add transaction</Button>}
+          />
+        </div>
       </div>
       <TransactionFilters categories={categoryOptions} />
       <TransactionTable transactions={rows} categories={categoryOptions} />

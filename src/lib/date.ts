@@ -14,6 +14,21 @@ export function monthRange(periodMonth: string) {
   return { start, end }
 }
 
+/** The last `count` month keys, oldest first, ending with the current month. */
+export function trailingMonthKeys(
+  count: number,
+  from: Date = new Date()
+): string[] {
+  const keys: string[] = []
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(
+      Date.UTC(from.getUTCFullYear(), from.getUTCMonth() - i, 1)
+    )
+    keys.push(monthKey(d))
+  }
+  return keys
+}
+
 /** "3h ago" / "2d ago" style relative time for compact notification lists. */
 export function formatRelativeTime(date: Date | string): string {
   const then = typeof date === "string" ? new Date(date) : date
