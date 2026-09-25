@@ -1,6 +1,6 @@
 "use client"
 
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Wallet } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { EmptyState } from "@/components/ui/empty-state"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { formatMoney } from "@/lib/money"
 
@@ -77,9 +78,12 @@ export function TransactionTable({
 
   if (transactions.length === 0) {
     return (
-      <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-        No transactions yet. Add your first one to get started.
-      </div>
+      <EmptyState
+        icon={Wallet}
+        title="No transactions yet"
+        description="Add your first one to start tracking your income and expenses."
+        compact
+      />
     )
   }
 

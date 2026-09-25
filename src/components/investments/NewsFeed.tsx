@@ -1,6 +1,6 @@
 "use client"
 
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, Newspaper } from "lucide-react"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export type NewsFeedItem = {
   id: string
@@ -50,9 +51,12 @@ export function NewsFeed({ items }: { items: NewsFeedItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="text-muted-foreground py-4 text-center text-sm">
-        No relevant news yet — hold or watch a security to see updates here.
-      </p>
+      <EmptyState
+        icon={Newspaper}
+        title="No relevant news yet"
+        description="Hold or watch a security to start seeing updates about it here."
+        compact
+      />
     )
   }
 

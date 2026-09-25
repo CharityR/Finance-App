@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, Pencil, Trash2 } from "lucide-react"
+import { ChevronDown, LineChart, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Fragment, useState, useTransition } from "react"
@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { EmptyState } from "@/components/ui/empty-state"
 import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type { HoldingValuation } from "@/server/services/holdings.service"
@@ -58,9 +59,12 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
 
   if (holdings.length === 0) {
     return (
-      <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-        No holdings yet. Add your first one to start tracking your portfolio.
-      </div>
+      <EmptyState
+        icon={LineChart}
+        title="No holdings yet"
+        description="Add your first one to start tracking your portfolio's value and performance."
+        compact
+      />
     )
   }
 

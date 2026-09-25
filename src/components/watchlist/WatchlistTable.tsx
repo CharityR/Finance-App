@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { Eye, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { EmptyState } from "@/components/ui/empty-state"
 import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type { WatchlistItemWithPrice } from "@/server/services/watchlist.service"
@@ -39,9 +40,12 @@ export function WatchlistTable({ items }: { items: WatchlistItemWithPrice[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-        Your watchlist is empty. Add a security to keep an eye on it.
-      </div>
+      <EmptyState
+        icon={Eye}
+        title="Your watchlist is empty"
+        description="Add a security to keep an eye on it, even before you own any of it."
+        compact
+      />
     )
   }
 

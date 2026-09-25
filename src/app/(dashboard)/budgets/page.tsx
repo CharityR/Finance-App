@@ -1,3 +1,4 @@
+import { Wallet2 } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { BudgetCard } from "@/components/budgets/BudgetCard"
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { formatMoney } from "@/lib/money"
 import { listCategoriesForUser } from "@/server/repositories/categories.repository"
 import { getProfile } from "@/server/repositories/profiles.repository"
@@ -56,10 +58,18 @@ export default async function BudgetsPage() {
       </div>
 
       {!progress || progress.categories.length === 0 ? (
-        <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-          No budget set for this month yet. Create one to start tracking your
-          spending against limits.
-        </div>
+        <EmptyState
+          icon={Wallet2}
+          title="Set a budget for this month"
+          description="Put a limit on each category and Kovault will warn you before you overspend, not after."
+          action={
+            <BudgetForm
+              categories={expenseCategories}
+              existingLimits={existingLimits}
+              trigger={<Button>+ Create budget</Button>}
+            />
+          }
+        />
       ) : (
         <>
           <Card>

@@ -1,8 +1,10 @@
+import { Target } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { GoalCard } from "@/components/goals/GoalCard"
 import { GoalForm } from "@/components/goals/GoalForm"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import * as goalsService from "@/server/services/goals.service"
 import { getCurrentUser } from "@/server/supabase/server"
 
@@ -25,10 +27,14 @@ export default async function GoalsPage() {
       </div>
 
       {goals.length === 0 ? (
-        <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-          No goals yet. Create one — an emergency fund, a house, anything
-          you&apos;re saving toward.
-        </div>
+        <EmptyState
+          icon={Target}
+          title="Set your first goal"
+          description="An emergency fund, a house, a car — pick something you're saving or investing toward, and watch your progress build over time."
+          action={
+            <GoalForm trigger={<Button>+ Create your first goal</Button>} />
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {goals.map((goal) => (
