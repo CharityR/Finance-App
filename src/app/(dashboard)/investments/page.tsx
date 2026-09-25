@@ -1,19 +1,8 @@
 import { redirect } from "next/navigation"
 
-import { AllocationCard } from "@/components/investments/AllocationCard"
-import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
 import { HoldingForm } from "@/components/investments/HoldingForm"
-import { HoldingsTable } from "@/components/investments/HoldingsTable"
-import { NetWorthExplorer } from "@/components/investments/NetWorthExplorer"
-import { NewsFeed } from "@/components/investments/NewsFeed"
-import { PortfolioSummaryCard } from "@/components/investments/PortfolioSummaryCard"
+import { InvestmentsDashboard } from "@/components/investments/InvestmentsDashboard"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import * as dividendIncomeService from "@/server/services/dividend-income.service"
 import * as holdingsService from "@/server/services/holdings.service"
 import * as newsService from "@/server/services/news.service"
@@ -24,19 +13,20 @@ export default async function InvestmentsPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  const [
-    holdings,
-    portfolioByCurrency,
-    netWorthBreakdown,
-    dividendIncome,
-    news,
-  ] = await Promise.all([
+  const [holdings, dividendIncome, news] = await Promise.all([
     holdingsService.listHoldingsWithValuation(user.id),
-    portfolioService.getPortfolioSummary(user.id),
-    portfolioService.getNetWorthBreakdown(user.id),
     dividendIncomeService.getEstimatedAnnualIncome(user.id),
     newsService.getRelevantNews(user.id),
   ])
+
+  // Derived from the one holdings fetch above rather than each calling its
+  // own userId-based version — two independent fetches would each hit the
+  // live-quote API separately and could disagree on a holding's price
+  // within the same page load, making the hero total and the drill-down
+  // total not match.
+  const portfolioByCurrency =
+    portfolioService.summarizePortfolioByCurrency(holdings)
+  const netWorthBreakdown = portfolioService.buildNetWorthBreakdown(holdings)
 
   return (
     <div className="space-y-6">
@@ -50,39 +40,13 @@ export default async function InvestmentsPage() {
         <HoldingForm trigger={<Button>Add holding</Button>} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Net worth explorer</CardTitle>
-          <CardDescription>
-            Start at your total value, then click through to see which countries
-            and sectors it&apos;s invested in.
-          </CardDescription>
-        </CardHeader>
-        <div className="px-6 pb-6">
-          <NetWorthExplorer breakdown={netWorthBreakdown} />
-        </div>
-      </Card>
-
-      {portfolioByCurrency.map((summary) => (
-        <div key={summary.currency} className="space-y-4">
-          <PortfolioSummaryCard summary={summary} currency={summary.currency} />
-          <AllocationCard
-            slices={summary.assetClassAllocation}
-            currency={summary.currency}
-          />
-        </div>
-      ))}
-
-      <DividendIncomeCard incomeByCurrency={dividendIncome} />
-
-      <HoldingsTable holdings={holdings} />
-
-      <div>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">
-          Relevant news
-        </h2>
-        <NewsFeed items={news} />
-      </div>
+      <InvestmentsDashboard
+        portfolioByCurrency={portfolioByCurrency}
+        netWorthBreakdown={netWorthBreakdown}
+        holdings={holdings}
+        dividendIncome={dividendIncome}
+        news={news}
+      />
     </div>
   )
 }

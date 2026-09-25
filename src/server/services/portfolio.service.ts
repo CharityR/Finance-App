@@ -85,12 +85,18 @@ function summarizeGroup(
  * summing NGN and USD holdings into one number would be meaningless (and
  * wrong) without an FX conversion step, which isn't built until Phase 8.
  * Sorted so the currency with the most holdings appears first.
+ *
+ * Pure/synchronous — takes an already-fetched holdings list rather than a
+ * userId, so a caller that also needs `getNetWorthBreakdown` (or anything
+ * else derived from the same holdings) can fetch
+ * `listHoldingsWithValuation` once and derive both from it. Two independent
+ * fetches would each hit the live-quote API separately, which could return
+ * two different prices for the same holding within one page load and make
+ * the two views disagree on the total.
  */
-export async function getPortfolioSummary(
-  userId: string
-): Promise<PortfolioSummaryForCurrency[]> {
-  const holdings = await holdingsService.listHoldingsWithValuation(userId)
-
+export function summarizePortfolioByCurrency(
+  holdings: HoldingValuation[]
+): PortfolioSummaryForCurrency[] {
   const byCurrency = new Map<string, HoldingValuation[]>()
   for (const h of holdings) {
     if (!byCurrency.has(h.currency)) byCurrency.set(h.currency, [])
@@ -100,6 +106,15 @@ export async function getPortfolioSummary(
   return Array.from(byCurrency.entries())
     .map(([currency, group]) => summarizeGroup(currency, group))
     .sort((a, b) => b.holdingCount - a.holdingCount)
+}
+
+/** Convenience wrapper for callers that only need this one view and don't
+ * already have a holdings list on hand. */
+export async function getPortfolioSummary(
+  userId: string
+): Promise<PortfolioSummaryForCurrency[]> {
+  const holdings = await holdingsService.listHoldingsWithValuation(userId)
+  return summarizePortfolioByCurrency(holdings)
 }
 
 export type NetWorthHolding = {
@@ -137,12 +152,14 @@ export type NetWorthBreakdown = {
  * -> sector -> holdings) rather than the flat single-level allocations
  * above — kept separate since the two views serve different UI needs
  * (independent donut charts vs. a click-to-drill treemap).
+ *
+ * Pure/synchronous for the same reason as summarizePortfolioByCurrency —
+ * share one holdings fetch with that function rather than each re-fetching
+ * live quotes independently.
  */
-export async function getNetWorthBreakdown(
-  userId: string
-): Promise<NetWorthBreakdown[]> {
-  const holdings = await holdingsService.listHoldingsWithValuation(userId)
-
+export function buildNetWorthBreakdown(
+  holdings: HoldingValuation[]
+): NetWorthBreakdown[] {
   const byCurrency = new Map<string, HoldingValuation[]>()
   for (const h of holdings) {
     if (!byCurrency.has(h.currency)) byCurrency.set(h.currency, [])
@@ -215,4 +232,13 @@ export async function getNetWorthBreakdown(
       }
     })
     .sort((a, b) => b.totalValue - a.totalValue)
+}
+
+/** Convenience wrapper for callers that only need this one view and don't
+ * already have a holdings list on hand. */
+export async function getNetWorthBreakdown(
+  userId: string
+): Promise<NetWorthBreakdown[]> {
+  const holdings = await holdingsService.listHoldingsWithValuation(userId)
+  return buildNetWorthBreakdown(holdings)
 }
