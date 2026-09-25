@@ -10,7 +10,8 @@ import {
   YAxis,
 } from "recharts"
 
-import { formatMoney } from "@/lib/money"
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
+import { formatMoney, formatMoneyCompact } from "@/lib/money"
 
 export function PriceHistoryChart({
   history,
@@ -24,7 +25,7 @@ export function PriceHistoryChart({
       month: "short",
       day: "numeric",
     }),
-    price: Number(h.price),
+    Price: Number(h.price),
   }))
 
   return (
@@ -36,19 +37,25 @@ export function PriceHistoryChart({
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={80}
+            width={64}
             domain={["auto", "auto"]}
-            tickFormatter={(v: number) => formatMoney(v, currency)}
+            tickFormatter={(v: number) => formatMoneyCompact(v, currency)}
           />
           <Tooltip
-            formatter={(v) => [formatMoney(Number(v ?? 0), currency), "Price"]}
+            content={(props) => (
+              <ChartTooltip
+                {...props}
+                formatValue={(v) => formatMoney(v, currency)}
+              />
+            )}
           />
           <Line
             type="monotone"
-            dataKey="price"
-            stroke="#2563eb"
+            dataKey="Price"
+            stroke="var(--primary)"
             strokeWidth={2}
             dot={false}
+            animationDuration={800}
           />
         </LineChart>
       </ResponsiveContainer>

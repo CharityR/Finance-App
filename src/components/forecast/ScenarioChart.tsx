@@ -11,7 +11,8 @@ import {
   YAxis,
 } from "recharts"
 
-import { formatMoney } from "@/lib/money"
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
+import { formatMoney, formatMoneyCompact } from "@/lib/money"
 import type { ScenarioSeries } from "@/lib/forecast"
 
 const SCENARIO_COLORS = {
@@ -49,14 +50,16 @@ export function ScenarioChart({
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={90}
-            tickFormatter={(v: number) => formatMoney(v, currency)}
+            width={64}
+            tickFormatter={(v: number) => formatMoneyCompact(v, currency)}
           />
           <Tooltip
-            formatter={(v, name) => [
-              formatMoney(Number(v ?? 0), currency),
-              SCENARIO_LABELS[name as keyof typeof SCENARIO_LABELS] ?? name,
-            ]}
+            content={(props) => (
+              <ChartTooltip
+                {...props}
+                formatValue={(v) => formatMoney(v, currency)}
+              />
+            )}
           />
           <Legend
             formatter={(name) =>
@@ -66,23 +69,29 @@ export function ScenarioChart({
           <Line
             type="monotone"
             dataKey="optimistic"
+            name={SCENARIO_LABELS.optimistic}
             stroke={SCENARIO_COLORS.optimistic}
             strokeWidth={2}
             dot={false}
+            animationDuration={800}
           />
           <Line
             type="monotone"
             dataKey="base"
+            name={SCENARIO_LABELS.base}
             stroke={SCENARIO_COLORS.base}
             strokeWidth={2}
             dot={false}
+            animationDuration={800}
           />
           <Line
             type="monotone"
             dataKey="conservative"
+            name={SCENARIO_LABELS.conservative}
             stroke={SCENARIO_COLORS.conservative}
             strokeWidth={2}
             dot={false}
+            animationDuration={800}
           />
         </LineChart>
       </ResponsiveContainer>

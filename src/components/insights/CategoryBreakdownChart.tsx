@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "recharts"
 
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
 import { formatMoney } from "@/lib/money"
 import type { CategoryBreakdownItem } from "@/server/services/insights.service"
 
@@ -38,12 +39,20 @@ export function CategoryBreakdownChart({
             innerRadius={50}
             outerRadius={90}
             paddingAngle={2}
+            animationDuration={800}
           >
             {items.map((item) => (
               <Cell key={item.categoryId ?? "none"} fill={item.color} />
             ))}
           </Pie>
-          <Tooltip formatter={(v) => formatMoney(Number(v ?? 0), currency)} />
+          <Tooltip
+            content={(props) => (
+              <ChartTooltip
+                {...props}
+                formatValue={(v) => formatMoney(v, currency)}
+              />
+            )}
+          />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

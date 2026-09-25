@@ -10,7 +10,8 @@ import {
   YAxis,
 } from "recharts"
 
-import { formatMoney } from "@/lib/money"
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
+import { formatMoney, formatMoneyCompact } from "@/lib/money"
 
 export function CashFlowChart({
   income,
@@ -32,12 +33,30 @@ export function CashFlowChart({
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={80}
-            tickFormatter={(v: number) => formatMoney(v, currency)}
+            width={64}
+            tickFormatter={(v: number) => formatMoneyCompact(v, currency)}
           />
-          <Tooltip formatter={(v) => formatMoney(Number(v ?? 0), currency)} />
-          <Bar dataKey="Income" fill="var(--positive)" radius={4} />
-          <Bar dataKey="Expenses" fill="var(--negative)" radius={4} />
+          <Tooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+            content={(props) => (
+              <ChartTooltip
+                {...props}
+                formatValue={(v) => formatMoney(v, currency)}
+              />
+            )}
+          />
+          <Bar
+            dataKey="Income"
+            fill="var(--positive)"
+            radius={[6, 6, 0, 0]}
+            animationDuration={800}
+          />
+          <Bar
+            dataKey="Expenses"
+            fill="var(--negative)"
+            radius={[6, 6, 0, 0]}
+            animationDuration={800}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

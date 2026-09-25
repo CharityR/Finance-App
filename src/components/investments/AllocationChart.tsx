@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "recharts"
 
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
 import type { AllocationSlice } from "@/server/services/portfolio.service"
 
 const COLORS = [
@@ -42,13 +43,19 @@ export function AllocationChart({ slices }: { slices: AllocationSlice[] }) {
             innerRadius={50}
             outerRadius={80}
             paddingAngle={2}
+            animationDuration={800}
           >
             {slices.map((slice, i) => (
               <Cell key={slice.label} fill={COLORS[i % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip
-            formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name]}
+            content={(props) => (
+              <ChartTooltip
+                {...props}
+                formatValue={(v) => `${v.toFixed(1)}%`}
+              />
+            )}
           />
           <Legend />
         </PieChart>

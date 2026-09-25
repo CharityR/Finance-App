@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts"
 
+import { ChartTooltip } from "@/components/ui/chart-tooltip"
 import type { SavingsRatePoint } from "@/server/services/insights.service"
 
 function monthLabel(periodMonth: string) {
@@ -21,7 +22,7 @@ function monthLabel(periodMonth: string) {
 export function SavingsRateChart({ trend }: { trend: SavingsRatePoint[] }) {
   const data = trend.map((p) => ({
     month: monthLabel(p.periodMonth),
-    savingsRate: Math.round(p.savingsRate * 10) / 10,
+    "Savings rate": Math.round(p.savingsRate * 10) / 10,
   }))
 
   return (
@@ -36,13 +37,18 @@ export function SavingsRateChart({ trend }: { trend: SavingsRatePoint[] }) {
             width={50}
             tickFormatter={(v: number) => `${v}%`}
           />
-          <Tooltip formatter={(v) => [`${v}%`, "Savings rate"]} />
+          <Tooltip
+            content={(props) => (
+              <ChartTooltip {...props} formatValue={(v) => `${v}%`} />
+            )}
+          />
           <Line
             type="monotone"
-            dataKey="savingsRate"
+            dataKey="Savings rate"
             stroke="var(--primary)"
             strokeWidth={2}
             dot={{ r: 3 }}
+            animationDuration={800}
           />
         </LineChart>
       </ResponsiveContainer>
