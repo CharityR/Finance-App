@@ -77,15 +77,19 @@ export function SecuritySearchInput({
 
     setIsResolving(true)
     try {
-      const created = await resolveSecurityAction(
+      const result = await resolveSecurityAction(
         option.ticker,
         option.source as "finnhub" | "ngn_market"
       )
+      if (!result.ok) {
+        toast.error(result.message)
+        return
+      }
       onChange({
-        id: created.id,
-        ticker: created.ticker,
-        name: created.name,
-        currency: created.currency,
+        id: result.security.id,
+        ticker: result.security.ticker,
+        name: result.security.name,
+        currency: result.security.currency,
       })
       setQuery("")
       setResults([])

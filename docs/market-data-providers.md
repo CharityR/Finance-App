@@ -56,6 +56,17 @@ has two more methods that fix this:
   `"NASDAQ NMS - GLOBAL MARKET"` down to the adapter's own canonical
   `SUPPORTED_EXCHANGES` codes); NGN Market's `/companies?search=` already
   returns everything needed in one call.
+  - **ETF gap**: `/stock/profile2` only covers individual company stocks on
+    Finnhub's free tier — it comes back as `{}` for every ETF (verified
+    empty for VOO, VXUS, GLD, IEMG; `/etf/profile` is a 403 on this plan).
+    When that happens, `resolveSecurity` falls back to `/search` (for the
+    name) plus a `/quote` check (to confirm the ticker is real), and sets
+    `exchange: "NYSEARCA"` / `country: "US"` as a best-effort default
+    rather than a verified fact — there's no free-tier way to look up an
+    ETF's actual listing venue. Functionally harmless (quotes/news still
+    route to Finnhub regardless of which of the three supported exchange
+    strings is stored), just a minor cosmetic inaccuracy on the exchange
+    badge for the rare ETF not actually on NYSE Arca.
 
 `src/server/services/securities.service.ts` ties this together:
 `searchSecurities` merges local DB matches with live results from both
@@ -100,13 +111,13 @@ yet; see the table below for what unlocks them.
 Verified against the live API with the account's real key (not just docs),
 2026-09-24.
 
-| Endpoint              | Used for                    | Free tier?                                                 |
-| --------------------- | --------------------------- | ---------------------------------------------------------- |
-| `GET /quote`          | Current price + % change    | ✅ Yes                                                     |
-| `GET /company-news`   | Recent headlines, real URLs | ✅ Yes                                                     |
-| `GET /stock/candle`   | Historical OHLC             | ❌ 403 `"You don't have access to this resource."`         |
-| `GET /stock/dividend` | Dividend history            | ❌ Same 403                                                |
-| `GET /stock/profile2` | Company profile             | ✅ Yes (not currently consumed — no unmet need for it yet) |
+| Endpoint              | Used for                          | Free tier?                                                   |
+| --------------------- | --------------------------------- | ------------------------------------------------------------ |
+| `GET /quote`          | Current price + % change          | ✅ Yes                                                       |
+| `GET /company-news`   | Recent headlines, real URLs       | ✅ Yes                                                       |
+| `GET /stock/candle`   | Historical OHLC                   | ❌ 403 `"You don't have access to this resource."`           |
+| `GET /stock/dividend` | Dividend history                  | ❌ Same 403                                                  |
+| `GET /stock/profile2` | Company profile (resolveSecurity) | ⚠️ Yes, but empty `{}` for ETFs — see the ETF gap note above |
 
 - **Auth**: `token` query parameter.
 - **Rate limit**: 60 requests/minute (confirmed via the `x-ratelimit-limit`

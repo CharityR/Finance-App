@@ -56,22 +56,38 @@ export async function searchSecurities(
   return [...localOptions, ...liveOptions].slice(0, 15)
 }
 
+export type ResolveSecurityResult =
+  | {
+      ok: true
+      security: Awaited<ReturnType<typeof securitiesRepo.upsertSecurity>>
+    }
+  | { ok: false; message: string }
+
 /**
  * Turns a live-only search result (id: null) into a real securities row,
  * or returns the existing one if it's since been added by someone else —
  * called once, right when a user picks a result to add, not per keystroke.
+ *
+ * Returns a result instead of throwing: this "couldn't resolve" case is an
+ * expected outcome (provider has nothing for this ticker right now), not a
+ * bug, and Next.js strips thrown Server Action error messages in
+ * production — a thrown Error here would reach the user as an opaque
+ * "Minified React error #441" instead of this message.
  */
 export async function resolveOrCreateSecurity(
   ticker: string,
   source: "finnhub" | "ngn_market"
-) {
+): Promise<ResolveSecurityResult> {
   const existing = await securitiesRepo.getSecurityByTicker(ticker)
-  if (existing) return existing
+  if (existing) return { ok: true, security: existing }
 
   const details = await resolveSecurityFromProvider(source, ticker)
   if (!details) {
-    throw new Error(`Could not look up ${ticker} — try again in a moment.`)
+    return {
+      ok: false,
+      message: `Could not look up ${ticker} — try again in a moment.`,
+    }
   }
 
-  return securitiesRepo.upsertSecurity(details)
+  return { ok: true, security: await securitiesRepo.upsertSecurity(details) }
 }

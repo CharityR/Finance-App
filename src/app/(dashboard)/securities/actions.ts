@@ -20,7 +20,8 @@ export async function searchSecuritiesAction(query: string) {
 }
 
 /** Called once, when a user picks a live-only search result, to create its
- * securities row before the holding/watchlist entry that references it. */
+ * securities row before the holding/watchlist entry that references it.
+ * Returns a result rather than throwing — see resolveOrCreateSecurity. */
 export async function resolveSecurityAction(
   ticker: string,
   source: "finnhub" | "ngn_market"

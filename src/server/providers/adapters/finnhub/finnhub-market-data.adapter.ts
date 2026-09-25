@@ -159,16 +159,49 @@ export const finnhubMarketDataAdapter: MarketDataProvider = {
     const profile = await finnhubGet<FinnhubProfile>("/stock/profile2", {
       symbol: ticker,
     })
-    if (!profile || !profile.name) return null
+    if (profile && profile.name) {
+      return {
+        ticker: profile.ticker,
+        name: profile.name,
+        exchange: normalizeExchange(profile.exchange),
+        currency: profile.currency,
+        country: profile.country,
+        sector: profile.finnhubIndustry,
+        assetClass: "stock",
+      }
+    }
+
+    // /stock/profile2 only covers individual company stocks on the free
+    // tier — it comes back as {} for every ETF (VOO, VXUS, GLD, ... all
+    // verified empty), with no free-tier ETF-profile endpoint to fall back
+    // to (/etf/profile is 403 on this plan). /search and /quote both do
+    // cover ETFs, so use those to confirm the ticker is real and get its
+    // name, at the cost of exchange/country being a best-effort default
+    // rather than a verified fact — Finnhub gives no free way to look up
+    // an ETF's actual listing venue.
+    type FinnhubSearchResult = {
+      symbol: string
+      description: string
+      type: string
+    }
+    const search = await finnhubGet<{ result: FinnhubSearchResult[] }>(
+      "/search",
+      { q: ticker }
+    )
+    const match = search?.result.find((r) => r.symbol === ticker)
+    if (!match) return null
+
+    const quote = await finnhubGet<FinnhubQuote>("/quote", { symbol: ticker })
+    if (!quote || quote.c === 0) return null
 
     return {
-      ticker: profile.ticker,
-      name: profile.name,
-      exchange: normalizeExchange(profile.exchange),
-      currency: profile.currency,
-      country: profile.country,
-      sector: profile.finnhubIndustry,
-      assetClass: "stock",
+      ticker,
+      name: match.description,
+      exchange: "NYSEARCA",
+      currency: "USD",
+      country: "US",
+      sector: null,
+      assetClass: /etf|etp/i.test(match.type) ? "etf" : "stock",
     }
   },
 }
