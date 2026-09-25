@@ -28,9 +28,9 @@ export function GoalTrajectoryCard({ goal }: { goal: Goal }) {
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">{goal.name}</CardTitle>
         {trajectory.isOnTrack ? (
-          <Badge variant="outline">On track (base case)</Badge>
+          <Badge variant="outline">On track at Base (8%)</Badge>
         ) : (
-          <Badge variant="destructive">Behind (base case)</Badge>
+          <Badge variant="destructive">Behind at Base (8%)</Badge>
         )}
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -77,19 +77,20 @@ export function GoalTrajectoryCard({ goal }: { goal: Goal }) {
               shortfall
             </span>
           )}{" "}
-          (base case)
+          at Base (8%/yr)
         </p>
         {!trajectory.isOnTrack && (
           <p className="text-muted-foreground">
-            To hit the target exactly, you&apos;d need about{" "}
+            To hit the target exactly at that same 8%/year growth assumption,
+            you&apos;d need about{" "}
             <span className="text-foreground font-medium">
               {formatMoney(
                 trajectory.requiredMonthlyContribution,
                 goal.currency
               )}
               /month
-            </span>{" "}
-            at the base 8% growth assumption.
+            </span>
+            .
           </p>
         )}
       </CardContent>

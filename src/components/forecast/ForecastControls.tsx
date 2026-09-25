@@ -45,6 +45,9 @@ export function ForecastControls({
             value={currentValue}
             onChange={(e) => setCurrentValue(e.target.value)}
           />
+          <p className="text-muted-foreground text-xs">
+            Pre-filled from your current portfolio value
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Monthly contribution ({currency})</Label>
@@ -52,9 +55,13 @@ export function ForecastControls({
             type="number"
             min="0"
             step="1000"
+            placeholder="0"
             value={monthlyContribution}
             onChange={(e) => setMonthlyContribution(e.target.value)}
           />
+          <p className="text-muted-foreground text-xs">
+            How much you plan to add each month — 0 projects growth alone
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Horizon</Label>
@@ -71,6 +78,9 @@ export function ForecastControls({
               </Button>
             ))}
           </div>
+          <p className="text-muted-foreground text-xs">
+            Years from today the chart projects forward
+          </p>
         </div>
       </div>
 

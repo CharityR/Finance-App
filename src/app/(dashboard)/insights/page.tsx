@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation"
 
 import { CategoryBreakdownChart } from "@/components/insights/CategoryBreakdownChart"
+import { RecurringSpendCard } from "@/components/insights/RecurringSpendCard"
 import { RecurringTransactionsList } from "@/components/insights/RecurringTransactionsList"
+import { SavingsRateCard } from "@/components/insights/SavingsRateCard"
 import { SavingsRateChart } from "@/components/insights/SavingsRateChart"
 import {
   Card,
@@ -10,8 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { AnimatedNumber } from "@/components/ui/animated-number"
-import { Tilt } from "@/components/ui/tilt"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as insightsService from "@/server/services/insights.service"
 import { getCurrentUser } from "@/server/supabase/server"
@@ -29,7 +29,6 @@ export default async function InsightsPage() {
     ])
 
   const currency = profile?.baseCurrency ?? "NGN"
-  const currentMonth = savingsRateTrend[savingsRateTrend.length - 1]
   const estimatedMonthlyRecurring = recurring.reduce(
     (sum, r) => sum + r.averageAmount,
     0
@@ -45,56 +44,12 @@ export default async function InsightsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Tilt>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-muted-foreground text-sm font-normal">
-                Savings rate (this month)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`text-2xl font-semibold ${
-                  (currentMonth?.savingsRate ?? 0) >= 0
-                    ? "text-green-600"
-                    : "text-destructive"
-                }`}
-              >
-                <AnimatedNumber
-                  value={currentMonth?.savingsRate ?? 0}
-                  kind="percent"
-                  decimals={0}
-                />
-              </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Estimated · of income kept, not spent
-              </p>
-            </CardContent>
-          </Card>
-        </Tilt>
-        <Tilt>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-muted-foreground text-sm font-normal">
-                Estimated recurring spend
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">
-                <AnimatedNumber
-                  value={estimatedMonthlyRecurring}
-                  kind="money"
-                  currency={currency}
-                  suffix="/mo"
-                />
-              </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Estimated · across {recurring.length} recurring transaction
-                {recurring.length === 1 ? "" : "s"}
-              </p>
-            </CardContent>
-          </Card>
-        </Tilt>
+        <SavingsRateCard trend={savingsRateTrend} currency={currency} />
+        <RecurringSpendCard
+          recurring={recurring}
+          estimatedMonthlyRecurring={estimatedMonthlyRecurring}
+          currency={currency}
+        />
       </div>
 
       <Card>

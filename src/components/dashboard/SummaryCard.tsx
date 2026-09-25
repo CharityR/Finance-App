@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tilt } from "@/components/ui/tilt"
@@ -15,10 +17,15 @@ export function SummaryCard({
   label,
   value,
   tone = "default",
+  href,
 }: {
   label: string
   value: ProvenanceValue<number>
   tone?: "default" | "positive" | "negative"
+  /** When set, the whole card links somewhere relevant instead of being a
+   * dead-end tile — e.g. "Income this month" -> the filtered transactions
+   * list that number came from. */
+  href?: string
 }) {
   const toneClass =
     tone === "positive"
@@ -27,28 +34,28 @@ export function SummaryCard({
         ? "text-destructive"
         : "text-foreground"
 
-  return (
-    <Tilt>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-muted-foreground text-sm font-normal">
-            {label}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-semibold ${toneClass}`}>
-            <AnimatedNumber
-              value={value.value}
-              kind="money"
-              currency={value.currency ?? "NGN"}
-            />
-          </div>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {PROVENANCE_LABEL[value.provenance]} · as of{" "}
-            {new Date(value.asOf).toLocaleDateString("en-NG")}
-          </p>
-        </CardContent>
-      </Card>
-    </Tilt>
+  const card = (
+    <Card className={href ? "hover:bg-muted/40 transition-colors" : undefined}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-muted-foreground text-sm font-normal">
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className={`text-2xl font-semibold ${toneClass}`}>
+          <AnimatedNumber
+            value={value.value}
+            kind="money"
+            currency={value.currency ?? "NGN"}
+          />
+        </div>
+        <p className="text-muted-foreground mt-1 text-xs">
+          {PROVENANCE_LABEL[value.provenance]} · as of{" "}
+          {new Date(value.asOf).toLocaleDateString("en-NG")}
+        </p>
+      </CardContent>
+    </Card>
   )
+
+  return <Tilt>{href ? <Link href={href}>{card}</Link> : card}</Tilt>
 }

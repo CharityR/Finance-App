@@ -1,9 +1,9 @@
 "use client"
 
-import { Pencil, Trash2 } from "lucide-react"
+import { ChevronDown, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { Fragment, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { removeHoldingAction } from "@/app/(dashboard)/investments/actions"
@@ -32,10 +32,14 @@ import {
 import { formatMoney } from "@/lib/money"
 import type { HoldingValuation } from "@/server/services/holdings.service"
 
+/** Rows are compact by default (Security / Value / Gain-Loss) — click a row
+ * to expand quantity, cost basis, price provenance, and the edit/remove
+ * actions, rather than spreading every column for every holding at once. */
 export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [openDeleteId, setOpenDeleteId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function handleRemove(id: string) {
     startTransition(async () => {
@@ -65,119 +69,173 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Security</TableHead>
-            <TableHead className="text-right">Quantity</TableHead>
-            <TableHead className="text-right">Avg. cost</TableHead>
-            <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-right">Value</TableHead>
             <TableHead className="text-right">Gain/Loss</TableHead>
-            <TableHead className="w-20" />
+            <TableHead className="w-8" />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {holdings.map((h) => (
-            <TableRow key={h.id}>
-              <TableCell>
-                <Link
-                  href={`/investments/${h.ticker}`}
-                  className="font-medium hover:underline"
+          {holdings.map((h) => {
+            const isOpen = expandedId === h.id
+            return (
+              <Fragment key={h.id}>
+                <TableRow
+                  className="hover:bg-muted/40 cursor-pointer"
+                  onClick={() => setExpandedId(isOpen ? null : h.id)}
                 >
-                  {h.ticker}
-                </Link>
-                <div className="text-muted-foreground text-xs">{h.name}</div>
-              </TableCell>
-              <TableCell className="text-right">
-                {h.quantity.toLocaleString()}
-              </TableCell>
-              <TableCell className="text-right">
-                {formatMoney(h.averageCostBasis, h.currency)}
-              </TableCell>
-              <TableCell className="text-right">
-                {h.currentPrice !== null ? (
-                  <div>
-                    {formatMoney(h.currentPrice, h.currency)}
-                    <Badge variant="outline" className="ml-1.5">
-                      {h.priceProvenance === "current" ? "Live" : "Estimated"}
-                    </Badge>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {formatMoney(h.averageCostBasis, h.currency)}
-                    <Badge variant="outline" className="ml-1.5">
-                      Estimated
-                    </Badge>
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className="text-right font-medium">
-                {formatMoney(h.currentValue, h.currency)}
-              </TableCell>
-              <TableCell
-                className={`text-right font-medium ${
-                  h.gainLoss >= 0 ? "text-green-600" : "text-destructive"
-                }`}
-              >
-                {h.gainLoss >= 0 ? "+" : ""}
-                {formatMoney(h.gainLoss, h.currency)}
-                <div className="text-xs font-normal">
-                  {h.gainLossPercent >= 0 ? "+" : ""}
-                  {h.gainLossPercent.toFixed(1)}%
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-1">
-                  <EditHoldingDialog
-                    holding={{
-                      id: h.id,
-                      ticker: h.ticker,
-                      quantity: h.quantity,
-                      averageCostBasis: h.averageCostBasis,
-                      currency: h.currency,
-                    }}
-                    trigger={
-                      <Button variant="ghost" size="icon-sm">
-                        <span className="sr-only">Edit</span>
-                        <Pencil />
-                      </Button>
-                    }
-                  />
-                  <AlertDialog
-                    open={openDeleteId === h.id}
-                    onOpenChange={(open) => setOpenDeleteId(open ? h.id : null)}
+                  <TableCell>
+                    <span className="font-medium">{h.ticker}</span>
+                    <div className="text-muted-foreground text-xs">
+                      {h.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatMoney(h.currentValue, h.currency)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right font-medium ${
+                      h.gainLoss >= 0 ? "text-green-600" : "text-destructive"
+                    }`}
                   >
-                    <AlertDialogTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={isPending}
-                        >
-                          <span className="sr-only">Remove</span>
-                          <Trash2 />
-                        </Button>
-                      }
+                    {h.gainLoss >= 0 ? "+" : ""}
+                    {h.gainLossPercent.toFixed(1)}%
+                  </TableCell>
+                  <TableCell>
+                    <ChevronDown
+                      className={`text-muted-foreground size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                     />
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Remove this holding?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {h.ticker} ({h.quantity.toLocaleString()} shares) will
-                          be removed from your portfolio.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleRemove(h.id)}>
-                          Remove
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                  </TableCell>
+                </TableRow>
+                {isOpen && (
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap gap-6 text-sm">
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Quantity
+                            </p>
+                            <p className="font-medium">
+                              {h.quantity.toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Avg. cost
+                            </p>
+                            <p className="font-medium">
+                              {formatMoney(h.averageCostBasis, h.currency)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Price
+                            </p>
+                            <p className="font-medium">
+                              {h.currentPrice !== null ? (
+                                <>
+                                  {formatMoney(h.currentPrice, h.currency)}
+                                  <Badge variant="outline" className="ml-1.5">
+                                    {h.priceProvenance === "current"
+                                      ? "Live"
+                                      : "Estimated"}
+                                  </Badge>
+                                </>
+                              ) : (
+                                <>
+                                  {formatMoney(h.averageCostBasis, h.currency)}
+                                  <Badge variant="outline" className="ml-1.5">
+                                    Estimated
+                                  </Badge>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Gain/Loss
+                            </p>
+                            <p
+                              className={`font-medium ${h.gainLoss >= 0 ? "text-green-600" : "text-destructive"}`}
+                            >
+                              {h.gainLoss >= 0 ? "+" : ""}
+                              {formatMoney(h.gainLoss, h.currency)}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            nativeButton={false}
+                            render={<Link href={`/investments/${h.ticker}`} />}
+                          >
+                            View detail
+                          </Button>
+                          <EditHoldingDialog
+                            holding={{
+                              id: h.id,
+                              ticker: h.ticker,
+                              quantity: h.quantity,
+                              averageCostBasis: h.averageCostBasis,
+                              currency: h.currency,
+                            }}
+                            trigger={
+                              <Button variant="ghost" size="icon-sm">
+                                <span className="sr-only">Edit</span>
+                                <Pencil />
+                              </Button>
+                            }
+                          />
+                          <AlertDialog
+                            open={openDeleteId === h.id}
+                            onOpenChange={(open) =>
+                              setOpenDeleteId(open ? h.id : null)
+                            }
+                          >
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  disabled={isPending}
+                                >
+                                  <span className="sr-only">Remove</span>
+                                  <Trash2 />
+                                </Button>
+                              }
+                            />
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Remove this holding?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {h.ticker} ({h.quantity.toLocaleString()}{" "}
+                                  shares) will be removed from your portfolio.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleRemove(h.id)}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

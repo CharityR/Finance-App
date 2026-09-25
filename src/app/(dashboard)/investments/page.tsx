@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-import { AllocationChart } from "@/components/investments/AllocationChart"
+import { AllocationCard } from "@/components/investments/AllocationCard"
 import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
 import { HoldingForm } from "@/components/investments/HoldingForm"
 import { HoldingsTable } from "@/components/investments/HoldingsTable"
@@ -66,14 +66,10 @@ export default async function InvestmentsPage() {
       {portfolioByCurrency.map((summary) => (
         <div key={summary.currency} className="space-y-4">
           <PortfolioSummaryCard summary={summary} currency={summary.currency} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">
-                Asset allocation ({summary.currency})
-              </CardTitle>
-            </CardHeader>
-            <AllocationChart slices={summary.assetClassAllocation} />
-          </Card>
+          <AllocationCard
+            slices={summary.assetClassAllocation}
+            currency={summary.currency}
+          />
         </div>
       ))}
 

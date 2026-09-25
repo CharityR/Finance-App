@@ -17,6 +17,10 @@ export type NewsItem = {
    * "Sample data" badge, which would be wrong once live articles are
    * mixed in. */
   provenance: "current" | "estimated"
+  /** Link to the original article — only ever set for live articles (mock
+   * fixtures have no real source to link to). NewsFeed opens this in a new
+   * tab instead of just showing a text block. */
+  url: string | null
 }
 
 /** Live company news only exists (today) via Finnhub for non-NGX tickers —
@@ -38,6 +42,7 @@ async function getLiveNewsForSecurity(
     security: { ticker: security.ticker },
     sector: null,
     provenance: "current" as const,
+    url: item.url,
   }))
 }
 
@@ -59,6 +64,7 @@ function mapMockItem(item: {
     security: item.security ? { ticker: item.security.ticker } : null,
     sector: item.sector,
     provenance: "estimated",
+    url: null,
   }
 }
 
