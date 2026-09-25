@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type { HoldingValuation } from "@/server/services/holdings.service"
 
@@ -84,9 +85,14 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
                   onClick={() => setExpandedId(isOpen ? null : h.id)}
                 >
                   <TableCell>
-                    <span className="font-medium">{h.ticker}</span>
-                    <div className="text-muted-foreground text-xs">
-                      {h.name}
+                    <div className="flex items-center gap-2.5">
+                      <TickerAvatar ticker={h.ticker} />
+                      <div>
+                        <span className="font-medium">{h.ticker}</span>
+                        <div className="text-muted-foreground text-xs">
+                          {h.name}
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
@@ -94,7 +100,7 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
                   </TableCell>
                   <TableCell
                     className={`text-right font-medium ${
-                      h.gainLoss >= 0 ? "text-green-600" : "text-destructive"
+                      h.gainLoss >= 0 ? "text-positive" : "text-negative"
                     }`}
                   >
                     {h.gainLoss >= 0 ? "+" : ""}
@@ -156,7 +162,7 @@ export function HoldingsTable({ holdings }: { holdings: HoldingValuation[] }) {
                               Gain/Loss
                             </p>
                             <p
-                              className={`font-medium ${h.gainLoss >= 0 ? "text-green-600" : "text-destructive"}`}
+                              className={`font-medium ${h.gainLoss >= 0 ? "text-positive" : "text-negative"}`}
                             >
                               {h.gainLoss >= 0 ? "+" : ""}
                               {formatMoney(h.gainLoss, h.currency)}

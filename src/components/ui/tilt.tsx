@@ -62,7 +62,7 @@ export function Tilt({
       onMouseLeave={handleMouseLeave}
       style={tiltStyle}
       className={cn(
-        "relative isolate rounded-xl transition-transform duration-150 ease-out will-change-transform",
+        "relative isolate rounded-2xl transition-transform duration-150 ease-out will-change-transform",
         className
       )}
     >

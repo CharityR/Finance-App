@@ -36,8 +36,8 @@ export function CashFlowChart({
             tickFormatter={(v: number) => formatMoney(v, currency)}
           />
           <Tooltip formatter={(v) => formatMoney(Number(v ?? 0), currency)} />
-          <Bar dataKey="Income" fill="#16a34a" radius={4} />
-          <Bar dataKey="Expenses" fill="var(--destructive)" radius={4} />
+          <Bar dataKey="Income" fill="var(--positive)" radius={4} />
+          <Bar dataKey="Expenses" fill="var(--negative)" radius={4} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -64,7 +64,7 @@ export function PortfolioSummaryCard({
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-semibold ${isGain ? "text-green-600" : "text-destructive"}`}
+              className={`text-2xl font-semibold ${isGain ? "text-positive" : "text-negative"}`}
             >
               <AnimatedNumber
                 value={summary.totalGainLoss}

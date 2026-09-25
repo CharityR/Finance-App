@@ -64,12 +64,12 @@ export function GoalTrajectoryCard({ goal }: { goal: Goal }) {
           Projected at your current contribution plan vs.{" "}
           {formatMoney(Number(goal.targetAmount), goal.currency)} target:{" "}
           {trajectory.shortfallOrSurplus >= 0 ? (
-            <span className="text-green-600">
+            <span className="text-positive">
               +{formatMoney(trajectory.shortfallOrSurplus, goal.currency)}{" "}
               surplus
             </span>
           ) : (
-            <span className="text-destructive">
+            <span className="text-negative">
               {formatMoney(
                 Math.abs(trajectory.shortfallOrSurplus),
                 goal.currency

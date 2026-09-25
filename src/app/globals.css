@@ -45,6 +45,8 @@
   --color-card: var(--card);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -92,6 +94,12 @@
      of which theme palette below is active for --primary. */
   --brand: #0d9488;
   --brand-foreground: #ffffff;
+
+  /* Semantic financial tones — muted emerald / soft coral rather than raw
+     Tailwind green-600/red-500, and fixed across every theme palette below
+     (a gain reads as a gain no matter which brand accent is active). */
+  --positive: #0d9668;
+  --negative: #d6553f;
 }
 
 .dark {
@@ -129,6 +137,9 @@
 
   --brand: #2dd4bf;
   --brand-foreground: #052e2b;
+
+  --positive: #34d399;
+  --negative: #f08a72;
 }
 
 /*
@@ -171,6 +182,9 @@
 
   --brand: #0d9488;
   --brand-foreground: #ffffff;
+
+  --positive: #0d9668;
+  --negative: #d6553f;
 }
 
 /*

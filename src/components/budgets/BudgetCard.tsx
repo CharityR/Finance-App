@@ -11,7 +11,7 @@ function ProgressBar({ percentage }: { percentage: number }) {
   return (
     <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
       <div
-        className={`h-full rounded-full transition-[width] duration-500 ease-out ${isOver ? "bg-destructive" : "bg-primary"}`}
+        className={`h-full rounded-full transition-[width] duration-500 ease-out ${isOver ? "bg-negative" : "bg-primary"}`}
         style={{ width: `${clamped}%` }}
       />
     </div>

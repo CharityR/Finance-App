@@ -50,8 +50,8 @@ export function SavingsRateCard({
             <div
               className={`text-2xl font-semibold ${
                 (currentMonth?.savingsRate ?? 0) >= 0
-                  ? "text-green-600"
-                  : "text-destructive"
+                  ? "text-positive"
+                  : "text-negative"
               }`}
             >
               <AnimatedNumber
@@ -90,7 +90,7 @@ export function SavingsRateCard({
                   </p>
                 </div>
                 <p
-                  className={`font-medium ${p.savingsRate >= 0 ? "text-green-600" : "text-destructive"}`}
+                  className={`font-medium ${p.savingsRate >= 0 ? "text-positive" : "text-negative"}`}
                 >
                   {p.savingsRate.toFixed(0)}%
                 </p>

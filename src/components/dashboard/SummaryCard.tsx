@@ -29,9 +29,9 @@ export function SummaryCard({
 }) {
   const toneClass =
     tone === "positive"
-      ? "text-green-600"
+      ? "text-positive"
       : tone === "negative"
-        ? "text-destructive"
+        ? "text-negative"
         : "text-foreground"
 
   const card = (

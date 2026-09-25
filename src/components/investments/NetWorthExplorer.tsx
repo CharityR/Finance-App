@@ -8,6 +8,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tilt } from "@/components/ui/tilt"
+import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type {
   NetWorthBreakdown,
@@ -249,16 +250,19 @@ export function NetWorthExplorer({
                   key={h.id}
                   className="flex items-center justify-between px-3 py-2 text-sm"
                 >
-                  <div>
-                    <p className="font-medium">{h.ticker}</p>
-                    <p className="text-muted-foreground text-xs">{h.name}</p>
+                  <div className="flex items-center gap-2.5">
+                    <TickerAvatar ticker={h.ticker} size="sm" />
+                    <div>
+                      <p className="font-medium">{h.ticker}</p>
+                      <p className="text-muted-foreground text-xs">{h.name}</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">
                       {formatMoney(h.currentValue, currencyData.currency)}
                     </p>
                     <p
-                      className={`text-xs ${h.gainLoss >= 0 ? "text-green-600" : "text-destructive"}`}
+                      className={`text-xs ${h.gainLoss >= 0 ? "text-positive" : "text-negative"}`}
                     >
                       {h.gainLoss >= 0 ? "+" : ""}
                       {h.gainLossPercent.toFixed(1)}%

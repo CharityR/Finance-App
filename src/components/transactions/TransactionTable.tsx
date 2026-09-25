@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { CategoryIcon } from "@/components/ui/category-icon"
 import {
   Table,
   TableBody,
@@ -43,7 +44,7 @@ export type TransactionRow = {
   type: "income" | "expense" | "transfer"
   description: string | null
   occurredAt: Date
-  category: { name: string } | null
+  category: { name: string; icon: string | null; color: string | null } | null
 }
 
 export function TransactionTable({
@@ -108,7 +109,16 @@ export function TransactionTable({
               <TableCell className="max-w-48 truncate">
                 {t.description || "—"}
               </TableCell>
-              <TableCell>{t.category?.name ?? "Uncategorized"}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <CategoryIcon
+                    icon={t.category?.icon ?? null}
+                    color={t.category?.color ?? null}
+                    size="sm"
+                  />
+                  {t.category?.name ?? "Uncategorized"}
+                </div>
+              </TableCell>
               <TableCell>
                 <Badge variant={t.type === "income" ? "default" : "outline"}>
                   {t.type}
@@ -116,7 +126,7 @@ export function TransactionTable({
               </TableCell>
               <TableCell
                 className={`text-right font-medium whitespace-nowrap ${
-                  t.type === "income" ? "text-green-600" : "text-foreground"
+                  t.type === "income" ? "text-positive" : "text-foreground"
                 }`}
               >
                 {t.type === "expense" ? "-" : t.type === "income" ? "+" : ""}

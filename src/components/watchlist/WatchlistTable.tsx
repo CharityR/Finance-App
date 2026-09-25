@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type { WatchlistItemWithPrice } from "@/server/services/watchlist.service"
 
@@ -60,13 +61,20 @@ export function WatchlistTable({ items }: { items: WatchlistItemWithPrice[] }) {
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
-                <Link
-                  href={`/investments/${item.ticker}`}
-                  className="font-medium hover:underline"
-                >
-                  {item.ticker}
-                </Link>
-                <div className="text-muted-foreground text-xs">{item.name}</div>
+                <div className="flex items-center gap-2.5">
+                  <TickerAvatar ticker={item.ticker} />
+                  <div>
+                    <Link
+                      href={`/investments/${item.ticker}`}
+                      className="font-medium hover:underline"
+                    >
+                      {item.ticker}
+                    </Link>
+                    <div className="text-muted-foreground text-xs">
+                      {item.name}
+                    </div>
+                  </div>
+                </div>
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
                 {item.sector ?? "—"} · {item.country}
@@ -86,8 +94,8 @@ export function WatchlistTable({ items }: { items: WatchlistItemWithPrice[] }) {
                   item.priceChangePercent === null
                     ? "text-muted-foreground"
                     : item.priceChangePercent >= 0
-                      ? "text-green-600"
-                      : "text-destructive"
+                      ? "text-positive"
+                      : "text-negative"
                 }`}
               >
                 {item.priceChangePercent !== null
