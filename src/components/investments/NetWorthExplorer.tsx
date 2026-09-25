@@ -4,10 +4,7 @@ import { ChevronLeft } from "lucide-react"
 import { useState } from "react"
 import { ResponsiveContainer, Treemap } from "recharts"
 
-import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tilt } from "@/components/ui/tilt"
 import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type {
@@ -82,17 +79,19 @@ function TreemapCell(props: TreemapCellProps) {
 }
 
 type View =
-  | { level: "total" }
-  | { level: "countries" }
-  | { level: "detail"; country: NetWorthCountry }
+  { level: "countries" } | { level: "detail"; country: NetWorthCountry }
 
+/** Starts straight at the country breakdown rather than repeating the
+ * total value as its own click-through step — the caller (InvestmentsDashboard)
+ * already shows that number once in the compact summary above this, so a
+ * "total" tile here would just be the same figure shown a second time. */
 export function NetWorthExplorer({
   breakdown,
 }: {
   breakdown: NetWorthBreakdown[]
 }) {
   const [currencyIndex, setCurrencyIndex] = useState(0)
-  const [view, setView] = useState<View>({ level: "total" })
+  const [view, setView] = useState<View>({ level: "countries" })
   const [selectedSector, setSelectedSector] = useState<string | null>(null)
 
   const currencyData = breakdown[currencyIndex]
@@ -127,7 +126,7 @@ export function NetWorthExplorer({
               variant={i === currencyIndex ? "default" : "outline"}
               onClick={() => {
                 setCurrencyIndex(i)
-                setView({ level: "total" })
+                setView({ level: "countries" })
                 setSelectedSector(null)
               }}
             >
@@ -137,42 +136,12 @@ export function NetWorthExplorer({
         </div>
       )}
 
-      {view.level === "total" && (
-        <Tilt>
-          <Card
-            className="hover:bg-muted/40 cursor-pointer transition-colors"
-            onClick={goToCountries}
-          >
-            <CardContent className="flex flex-col items-center gap-1 py-10 text-center">
-              <p className="text-muted-foreground text-sm">
-                Total portfolio value ({currencyData.currency})
-              </p>
-              <p className="text-4xl font-semibold">
-                <AnimatedNumber
-                  value={currencyData.totalValue}
-                  kind="money"
-                  currency={currencyData.currency}
-                />
-              </p>
-              <p className="text-muted-foreground mt-2 text-xs">
-                Click to see where it&apos;s invested by country
-              </p>
-            </CardContent>
-          </Card>
-        </Tilt>
-      )}
-
       {view.level === "countries" && (
         <div className="space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2"
-            onClick={() => setView({ level: "total" })}
-          >
-            <ChevronLeft /> Net worth
-          </Button>
-          <div className="h-80 w-full">
+          <p className="text-muted-foreground text-xs">
+            By country — click a segment to see its sectors and holdings
+          </p>
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
                 data={countryTreemapData}
@@ -218,6 +187,7 @@ export function NetWorthExplorer({
             </p>
           </div>
 
+          <p className="text-muted-foreground text-xs">By sector</p>
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <Treemap

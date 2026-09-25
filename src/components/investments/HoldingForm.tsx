@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { MoneyInput } from "@/components/ui/money-input"
 
 const holdingFormSchema = z.object({
   quantity: z
@@ -117,7 +118,12 @@ export function HoldingForm({ trigger }: { trigger: React.ReactElement }) {
                     {security ? ` (${security.currency})` : ""}
                   </FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" {...field} />
+                    <MoneyInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -20,6 +20,22 @@ function monthLabel(periodMonth: string) {
 }
 
 export function SavingsRateChart({ trend }: { trend: SavingsRatePoint[] }) {
+  const monthsWithActivity = trend.filter(
+    (p) => p.income > 0 || p.expense > 0
+  ).length
+
+  // A trend line across mostly-empty months (no transactions recorded yet)
+  // reads as a flat line at 0% with one real point — not a chart worth a
+  // full h-56 of screen space. Say so plainly instead.
+  if (monthsWithActivity < 2) {
+    return (
+      <p className="text-muted-foreground py-6 text-center text-sm">
+        Not enough history yet — the trend line will fill in as you log
+        transactions across more months.
+      </p>
+    )
+  }
+
   const data = trend.map((p) => ({
     month: monthLabel(p.periodMonth),
     "Savings rate": Math.round(p.savingsRate * 10) / 10,

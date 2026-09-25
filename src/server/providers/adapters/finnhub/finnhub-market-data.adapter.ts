@@ -60,6 +60,23 @@ function normalizeExchange(raw: string): string {
   return raw
 }
 
+/** Finnhub's /stock/profile2 (and our own ETF fallback) return a bare ISO
+ * 3166-1 alpha-2 code ("US", "HK") — the rest of the app (seed fixtures,
+ * NGN Market) uses full country names ("United States", "Nigeria"), and
+ * NetWorthExplorer/portfolio allocation group holdings by this exact
+ * string, so a code left un-normalized silently splits one country into
+ * two buckets ("United States" and "US" both showing up as separate
+ * slices of the same pie). Intl.DisplayNames is a built-in, no lookup
+ * table to maintain. */
+function normalizeCountry(code: string): string {
+  try {
+    const name = new Intl.DisplayNames(["en"], { type: "region" }).of(code)
+    return name ?? code
+  } catch {
+    return code
+  }
+}
+
 export const finnhubMarketDataAdapter: MarketDataProvider = {
   async getQuote(security: SecurityRef): Promise<LiveQuote | null> {
     if (!SUPPORTED_EXCHANGES.has(security.exchange)) return null
@@ -165,7 +182,7 @@ export const finnhubMarketDataAdapter: MarketDataProvider = {
         name: profile.name,
         exchange: normalizeExchange(profile.exchange),
         currency: profile.currency,
-        country: profile.country,
+        country: normalizeCountry(profile.country),
         sector: profile.finnhubIndustry,
         assetClass: "stock",
       }
@@ -199,7 +216,7 @@ export const finnhubMarketDataAdapter: MarketDataProvider = {
       name: match.description,
       exchange: "NYSEARCA",
       currency: "USD",
-      country: "US",
+      country: normalizeCountry("US"),
       sector: null,
       assetClass: /etf|etp/i.test(match.type) ? "etf" : "stock",
     }

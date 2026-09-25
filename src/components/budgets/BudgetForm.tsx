@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 import { saveBudgetAction } from "@/app/(dashboard)/budgets/actions"
@@ -16,8 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { MoneyInput } from "@/components/ui/money-input"
 
 type CategoryOption = { id: string; name: string }
 
@@ -79,12 +79,18 @@ export function BudgetForm({
             {categories.map((c) => (
               <div key={c.id} className="flex items-center gap-3">
                 <Label className="w-32 shrink-0 text-sm">{c.name}</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="No limit"
-                  {...form.register(c.id)}
+                <Controller
+                  control={form.control}
+                  name={c.id}
+                  render={({ field }) => (
+                    <MoneyInput
+                      placeholder="No limit"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
               </div>
             ))}

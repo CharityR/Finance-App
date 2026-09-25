@@ -33,10 +33,10 @@ export default async function DashboardLayout({
   )
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex h-dvh flex-col overflow-hidden md:flex-row">
       <MobileNav userEmail={user.email ?? ""} logout={logout} />
-      <aside className="hidden w-56 shrink-0 border-r md:flex md:flex-col">
-        <div className="border-b px-4 py-4">
+      <aside className="hidden h-full w-56 shrink-0 flex-col border-r md:flex">
+        <div className="shrink-0 border-b px-4 py-4">
           <span className="text-brand text-lg font-semibold tracking-tight">
             Kovault Financial
           </span>
@@ -44,7 +44,7 @@ export default async function DashboardLayout({
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
         </div>
-        <div className="border-t p-3">
+        <div className="shrink-0 border-t p-3">
           <div className="text-muted-foreground truncate px-1 pb-2 text-xs">
             {user.email}
           </div>
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
           </form>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-6xl items-center justify-end gap-1 px-6 pt-4">
           <ThemeToggle />
           <NotificationBell

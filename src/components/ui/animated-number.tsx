@@ -5,9 +5,16 @@ import { formatMoney } from "@/lib/money"
 
 /**
  * `kind` + primitive params rather than a `format` function — this renders
- * inside Server Components (SummaryCard, BudgetCard, PortfolioSummaryCard),
- * and a function prop can't cross the server/client boundary, only
- * serializable values can.
+ * inside Server Components (SummaryCard, BudgetCard), and a function prop
+ * can't cross the server/client boundary, only serializable values can.
+ *
+ * Only use this for a value shown in exactly one place on the page. Each
+ * instance runs its own independent count-up animation with its own start
+ * time, so the same underlying number displayed via two AnimatedNumber
+ * instances (e.g. a hero total and a summary card showing the same total)
+ * can visibly disagree for the ~700ms both are still animating — a real bug
+ * we hit on the Investments page. When a value is (or might become)
+ * duplicated elsewhere on screen, render it as plain static text instead.
  */
 type BaseProps = {
   value: number

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react"
 
 import { ScenarioChart } from "@/components/forecast/ScenarioChart"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { MoneyInput } from "@/components/ui/money-input"
 import { projectScenarios } from "@/lib/forecast"
 import { formatMoney } from "@/lib/money"
 
@@ -38,26 +38,17 @@ export function ForecastControls({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label>Starting value ({currency})</Label>
-          <Input
-            type="number"
-            min="0"
-            step="1000"
-            value={currentValue}
-            onChange={(e) => setCurrentValue(e.target.value)}
-          />
+          <MoneyInput value={currentValue} onChange={setCurrentValue} />
           <p className="text-muted-foreground text-xs">
             Pre-filled from your current portfolio value
           </p>
         </div>
         <div className="space-y-2">
           <Label>Monthly contribution ({currency})</Label>
-          <Input
-            type="number"
-            min="0"
-            step="1000"
+          <MoneyInput
             placeholder="0"
             value={monthlyContribution}
-            onChange={(e) => setMonthlyContribution(e.target.value)}
+            onChange={setMonthlyContribution}
           />
           <p className="text-muted-foreground text-xs">
             How much you plan to add each month — 0 projects growth alone

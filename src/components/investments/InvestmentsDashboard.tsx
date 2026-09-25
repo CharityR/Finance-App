@@ -1,20 +1,17 @@
 "use client"
 
+import { LineChart } from "lucide-react"
 import { useState } from "react"
 
 import { AllocationChart } from "@/components/investments/AllocationChart"
 import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
-import { GainLossSidebarCard } from "@/components/investments/GainLossSidebarCard"
 import { HoldingsTable } from "@/components/investments/HoldingsTable"
 import { NetWorthExplorer } from "@/components/investments/NetWorthExplorer"
 import { NewsFeed, type NewsFeedItem } from "@/components/investments/NewsFeed"
-import { PortfolioSummaryCard } from "@/components/investments/PortfolioSummaryCard"
 import { TopPerformersCard } from "@/components/investments/TopPerformersCard"
-import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Tilt } from "@/components/ui/tilt"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Separator } from "@/components/ui/separator"
 import { formatMoney } from "@/lib/money"
 import type { DividendIncomeByCurrency } from "@/server/services/dividend-income.service"
 import type { HoldingValuation } from "@/server/services/holdings.service"
@@ -24,12 +21,11 @@ import type {
 } from "@/server/services/portfolio.service"
 
 /**
- * Replaces the old "stack every section vertically" Investments page —
- * progressive disclosure instead: one hero total, a tabbed main column
- * (Holdings / Asset allocation / News) so the page doesn't force infinite
- * scrolling, and a sidebar of glanceable stats that stay visible while you
- * switch tabs. One currency toggle at the top drives every section below
- * it, rather than each chart/table managing its own.
+ * Redesigned per the required hierarchy: title/action (page.tsx) -> compact
+ * summary -> holdings -> allocation/performance -> dividend income -> news.
+ * One flat column with section headings and dividers, not cards-inside-cards
+ * competing for attention, and the total value/gain-loss appear exactly
+ * once (the summary strip) — nowhere below repeats them.
  */
 export function InvestmentsDashboard({
   portfolioByCurrency,
@@ -47,103 +43,146 @@ export function InvestmentsDashboard({
   const [currencyIndex, setCurrencyIndex] = useState(0)
   const summary = portfolioByCurrency[currencyIndex] ?? null
 
-  const currencyHoldings = summary
-    ? holdings.filter((h) => h.currency === summary.currency)
-    : []
-  const currencyBreakdown = summary
-    ? netWorthBreakdown.filter((b) => b.currency === summary.currency)
-    : []
-  const currencyDividends = summary
-    ? dividendIncome.filter((d) => d.currency === summary.currency)
-    : []
-  const isGain = (summary?.totalGainLoss ?? 0) >= 0
+  if (!summary) {
+    return (
+      <div className="space-y-8">
+        <EmptyState
+          icon={LineChart}
+          title="No holdings yet"
+          description="Add your first one to start tracking your portfolio's value and performance."
+        />
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            News &amp; market feed
+          </h2>
+          <NewsFeed items={news} />
+        </section>
+      </div>
+    )
+  }
+
+  const currencyHoldings = holdings.filter(
+    (h) => h.currency === summary.currency
+  )
+  const currencyBreakdown = netWorthBreakdown.filter(
+    (b) => b.currency === summary.currency
+  )
+  const currencyDividends = dividendIncome.filter(
+    (d) => d.currency === summary.currency
+  )
+  const isGain = summary.totalGainLoss >= 0
 
   return (
-    <div className="space-y-6">
-      <Tilt>
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-            {portfolioByCurrency.length > 1 && (
-              <div className="mb-2 flex gap-2">
-                {portfolioByCurrency.map((s, i) => (
-                  <Button
-                    key={s.currency}
-                    size="sm"
-                    variant={i === currencyIndex ? "default" : "outline"}
-                    onClick={() => setCurrencyIndex(i)}
-                  >
-                    {s.currency}
-                  </Button>
-                ))}
-              </div>
-            )}
-            <p className="text-muted-foreground text-sm">
-              Total portfolio value{summary ? ` (${summary.currency})` : ""}
+    <div className="space-y-8">
+      {/* Compact summary — total value, gain/loss, and holding count appear
+          here once and nowhere else on this page. */}
+      <section className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b pb-5">
+        <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+          <div>
+            <p className="text-muted-foreground text-xs">
+              Total value ({summary.currency})
             </p>
-            {summary ? (
-              <>
-                <p className="text-4xl font-semibold sm:text-5xl">
-                  <AnimatedNumber
-                    value={summary.totalValue}
-                    kind="money"
-                    currency={summary.currency}
-                  />
-                </p>
-                <p
-                  className={`text-sm font-medium ${isGain ? "text-positive" : "text-negative"}`}
-                >
-                  {isGain ? "+" : ""}
-                  {formatMoney(summary.totalGainLoss, summary.currency)} (
-                  {isGain ? "+" : ""}
-                  {summary.totalGainLossPercent.toFixed(1)}%) ·{" "}
-                  {summary.holdingCount} holding
-                  {summary.holdingCount === 1 ? "" : "s"}
-                </p>
-              </>
-            ) : (
-              <p className="text-muted-foreground py-4 text-sm">
-                No holdings yet — add one to start tracking your portfolio.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </Tilt>
-
-      <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
-        <Tabs defaultValue="holdings">
-          <TabsList>
-            <TabsTrigger value="holdings">Holdings</TabsTrigger>
-            <TabsTrigger value="allocation">Asset allocation</TabsTrigger>
-            <TabsTrigger value="news">News &amp; market feed</TabsTrigger>
-          </TabsList>
-          <TabsContent value="holdings" className="space-y-6 pt-4">
-            <NetWorthExplorer breakdown={currencyBreakdown} />
-            <HoldingsTable holdings={currencyHoldings} />
-          </TabsContent>
-          <TabsContent value="allocation" className="space-y-4 pt-4">
-            {summary && (
-              <PortfolioSummaryCard
-                summary={summary}
-                currency={summary.currency}
-              />
-            )}
-            <Card>
-              <CardContent className="pt-2">
-                <AllocationChart slices={summary?.assetClassAllocation ?? []} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="news" className="pt-4">
-            <NewsFeed items={news} />
-          </TabsContent>
-        </Tabs>
-
-        <div className="space-y-4">
-          {summary && <GainLossSidebarCard summary={summary} />}
-          <TopPerformersCard holdings={currencyHoldings} />
-          <DividendIncomeCard incomeByCurrency={currencyDividends} />
+            <p className="text-3xl font-semibold tracking-tight">
+              {formatMoney(summary.totalValue, summary.currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">Gain / loss</p>
+            <p
+              className={`text-lg font-medium ${isGain ? "text-positive" : "text-negative"}`}
+            >
+              {isGain ? "+" : ""}
+              {formatMoney(summary.totalGainLoss, summary.currency)} (
+              {isGain ? "+" : ""}
+              {summary.totalGainLossPercent.toFixed(1)}%)
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">Holdings</p>
+            <p className="text-lg font-medium">{summary.holdingCount}</p>
+          </div>
         </div>
-      </div>
+
+        {portfolioByCurrency.length > 1 && (
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex gap-1.5">
+              {portfolioByCurrency.map((s, i) => (
+                <Button
+                  key={s.currency}
+                  size="sm"
+                  variant={i === currencyIndex ? "default" : "outline"}
+                  onClick={() => setCurrencyIndex(i)}
+                >
+                  {s.currency}
+                </Button>
+              ))}
+            </div>
+            <p className="text-muted-foreground max-w-52 text-right text-xs text-balance">
+              Each currency&apos;s holdings shown separately — not converted
+              into the other.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* Holdings — right after the summary, not below several other
+          sections. */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">Holdings</h2>
+        <HoldingsTable holdings={currencyHoldings} />
+      </section>
+
+      <Separator />
+
+      {/* Allocation & performance */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold tracking-tight">
+          Allocation &amp; performance
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <h3 className="text-muted-foreground mb-2 text-sm font-medium">
+              By geography
+            </h3>
+            <NetWorthExplorer breakdown={currencyBreakdown} />
+          </div>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-muted-foreground mb-2 text-sm font-medium">
+                By asset class
+              </h3>
+              <AllocationChart slices={summary.assetClassAllocation} />
+            </div>
+            <TopPerformersCard holdings={currencyHoldings} />
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Dividend income */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">
+          Dividend income
+        </h2>
+        {currencyDividends.length > 0 ? (
+          <DividendIncomeCard incomeByCurrency={currencyDividends} />
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            None of your {summary.currency} holdings pay a dividend yet.
+          </p>
+        )}
+      </section>
+
+      <Separator />
+
+      {/* News & market feed */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">
+          News &amp; market feed
+        </h2>
+        <NewsFeed items={news} />
+      </section>
     </div>
   )
 }

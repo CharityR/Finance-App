@@ -40,10 +40,11 @@ export default async function ForecastPage() {
 
       <div className="border-muted-foreground/30 bg-muted/30 space-y-1.5 rounded-lg border border-dashed p-3 text-xs">
         <p>
-          <strong>Illustrative projection only, not a guarantee.</strong> Every
-          number on this page is your portfolio grown forward under three fixed,
-          made-up growth rates, compounded monthly — not a prediction of what
-          will actually happen.
+          <strong>Illustrative scenarios — not investment guarantees.</strong>{" "}
+          Every number on this page projects your portfolio forward under three
+          fixed assumed growth rates, compounded monthly. Markets don&apos;t
+          move in a straight line, so treat these as a range of possibilities to
+          plan around, not a forecast of what will actually happen.
         </p>
         <p className="flex flex-wrap gap-x-3 gap-y-1">
           <span>
