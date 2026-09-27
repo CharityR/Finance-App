@@ -2,7 +2,9 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { CashFlowChart } from "@/components/dashboard/CashFlowChart"
-import { SummaryCard } from "@/components/dashboard/SummaryCard"
+import { NetWorthHero } from "@/components/dashboard/NetWorthHero"
+import { WealthComposition } from "@/components/dashboard/WealthComposition"
+import { WealthInsights } from "@/components/dashboard/WealthInsights"
 import {
   Card,
   CardContent,
@@ -10,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { formatMoney } from "@/lib/money"
 import { getProfile } from "@/server/repositories/profiles.repository"
 import * as dashboardService from "@/server/services/dashboard.service"
 import { getCurrentUser } from "@/server/supabase/server"
@@ -20,101 +23,49 @@ export default async function DashboardPage() {
 
   const profile = await getProfile(user.id)
   const currency = profile?.baseCurrency ?? "NGN"
-  const summary = await dashboardService.getDashboardSummary(user.id, currency)
+  const overview = await dashboardService.getWealthOverview(user.id, currency)
+  const primaryNetWorth =
+    overview.netWorthSummaries.find((s) => s.reportingCurrency === currency) ??
+    overview.netWorthSummaries[0]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm">
-          Your financial command center.
+          Your entire financial position, in one place.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard
-          label="Cash balance"
-          value={summary.cashBalance}
-          href="/transactions"
-        />
-        <SummaryCard
-          label="Income this month"
-          value={summary.totalIncome}
-          tone="positive"
-          href="/transactions?type=income"
-        />
-        <SummaryCard
-          label="Expenses this month"
-          value={summary.totalExpenses}
-          tone="negative"
-          href="/transactions?type=expense"
-        />
-        <SummaryCard
-          label="Net cash flow"
-          value={summary.netCashFlow}
-          tone={summary.netCashFlow.value >= 0 ? "positive" : "negative"}
-          href="/insights"
-        />
-      </div>
+      <NetWorthHero summaries={overview.netWorthSummaries} />
 
-      <Link href="/insights">
-        <Card className="hover:bg-muted/40 transition-colors">
-          <CardHeader>
-            <CardTitle>This month&apos;s cash flow</CardTitle>
-            <CardDescription>
-              Income vs. expenses · see the full trend in Insights
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CashFlowChart
-              income={summary.totalIncome.value}
-              expense={summary.totalExpenses.value}
-              currency={currency}
-            />
-          </CardContent>
-        </Card>
-      </Link>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">
+          Wealth composition
+        </h2>
+        <WealthComposition
+          composition={primaryNetWorth.composition}
+          currency={primaryNetWorth.reportingCurrency}
+        />
+      </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/budgets">
-          {summary.hasBudget && summary.budgetUtilization ? (
-            <Card className="hover:bg-muted/40 transition-colors">
-              <CardHeader>
-                <CardTitle>Budget utilization</CardTitle>
-                <CardDescription>
-                  {summary.budgetUtilization.value.toFixed(0)}% of this
-                  month&apos;s budgeted categories used
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ) : (
-            <Card className="hover:bg-muted/40 transition-colors">
-              <CardHeader>
-                <CardTitle>No budget yet</CardTitle>
-                <CardDescription>
-                  Set up a budget to track spending against limits.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          )}
-        </Link>
-
+      <section className="grid gap-4 sm:grid-cols-2">
         <Link href="/goals">
-          {summary.goalsSummary ? (
-            <Card className="hover:bg-muted/40 transition-colors">
+          {overview.goalsSummary ? (
+            <Card className="hover:bg-muted/40 h-full transition-colors">
               <CardHeader>
                 <CardTitle>Goals</CardTitle>
                 <CardDescription>
-                  {summary.goalsSummary.overallPercentage.value.toFixed(0)}%
-                  funded across {summary.goalsSummary.count} active goal
-                  {summary.goalsSummary.count === 1 ? "" : "s"}
-                  {summary.goalsSummary.offTrackCount > 0 &&
-                    ` · ${summary.goalsSummary.offTrackCount} off track`}
+                  {overview.goalsSummary.overallPercentage.value.toFixed(0)}%
+                  funded across {overview.goalsSummary.count} active goal
+                  {overview.goalsSummary.count === 1 ? "" : "s"}
+                  {overview.goalsSummary.offTrackCount > 0 &&
+                    ` · ${overview.goalsSummary.offTrackCount} off track`}
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : (
-            <Card className="hover:bg-muted/40 transition-colors">
+            <Card className="hover:bg-muted/40 h-full transition-colors">
               <CardHeader>
                 <CardTitle>No goals yet</CardTitle>
                 <CardDescription>
@@ -125,7 +76,112 @@ export default async function DashboardPage() {
             </Card>
           )}
         </Link>
-      </div>
+
+        <Link href="/budgets">
+          {overview.hasBudget && overview.budgetUtilization ? (
+            <Card className="hover:bg-muted/40 h-full transition-colors">
+              <CardHeader>
+                <CardTitle>Budget utilization</CardTitle>
+                <CardDescription>
+                  {overview.budgetUtilization.value.toFixed(0)}% of this
+                  month&apos;s budgeted categories used
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ) : (
+            <Card className="hover:bg-muted/40 h-full transition-colors">
+              <CardHeader>
+                <CardTitle>No budget yet</CardTitle>
+                <CardDescription>
+                  Set up a budget to track spending against limits.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+        </Link>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">
+          What&apos;s worth your attention
+        </h2>
+        <WealthInsights insights={overview.insights} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">Investments</h2>
+        <Link href="/investments">
+          {overview.investmentsSummary ? (
+            <Card className="hover:bg-muted/40 transition-colors">
+              <CardHeader>
+                <CardTitle>
+                  {formatMoney(
+                    overview.investmentsSummary.totalValue,
+                    overview.investmentsSummary.currency
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {overview.investmentsSummary.holdingCount} holding
+                  {overview.investmentsSummary.holdingCount === 1 ? "" : "s"}{" "}
+                  ·{" "}
+                  <span
+                    className={
+                      overview.investmentsSummary.totalGainLoss >= 0
+                        ? "text-positive"
+                        : "text-negative"
+                    }
+                  >
+                    {overview.investmentsSummary.totalGainLoss >= 0 ? "+" : ""}
+                    {overview.investmentsSummary.totalGainLossPercent.toFixed(1)}
+                    %
+                  </span>{" "}
+                  all time
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ) : (
+            <Card className="hover:bg-muted/40 transition-colors">
+              <CardHeader>
+                <CardTitle>No holdings yet</CardTitle>
+                <CardDescription>
+                  Add your first investment to start tracking it here.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+        </Link>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight">Cash flow</h2>
+        <Link href="/insights">
+          <Card className="hover:bg-muted/40 transition-colors">
+            <CardHeader>
+              <CardTitle>This month&apos;s cash flow</CardTitle>
+              <CardDescription>
+                Income {formatMoney(overview.cashFlow.totalIncome.value, currency)}{" "}
+                · Expenses{" "}
+                {formatMoney(overview.cashFlow.totalExpenses.value, currency)} ·
+                see the full trend in Insights
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CashFlowChart
+                income={overview.cashFlow.totalIncome.value}
+                expense={overview.cashFlow.totalExpenses.value}
+                currency={currency}
+              />
+            </CardContent>
+          </Card>
+        </Link>
+      </section>
+
+      <Link
+        href="/transactions"
+        className="text-primary block text-sm font-medium hover:underline"
+      >
+        View all transactions →
+      </Link>
     </div>
   )
 }

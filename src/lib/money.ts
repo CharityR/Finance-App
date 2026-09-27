@@ -39,3 +39,34 @@ export function formatMoneyCompact(
     maximumFractionDigits: 1,
   }).format(amount)
 }
+
+/**
+ * Splits a formatted amount into its currency symbol and the number,
+ * so a caller can render the symbol at a different (typically smaller)
+ * size than the digits. Needed because some currency glyphs — the Naira
+ * sign's double horizontal bar through the "N" — read as a strikethrough
+ * across the whole figure at large display sizes (a real bug reported on
+ * the Dashboard's net-worth hero). No decimals: this is for large, glanceable
+ * headline figures, not precise amounts.
+ */
+export function formatMoneyParts(
+  amount: number,
+  currency: string,
+  locale = "en-NG"
+): { symbol: string; number: string } {
+  const parts = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 0,
+  }).formatToParts(amount)
+
+  const symbol = parts.find((p) => p.type === "currency")?.value ?? ""
+  const number = parts
+    .filter((p) => p.type !== "currency")
+    .map((p) => p.value)
+    .join("")
+    .trim()
+
+  return { symbol, number }
+}

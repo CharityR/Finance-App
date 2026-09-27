@@ -63,7 +63,7 @@ function normalizeExchange(raw: string): string {
 /** Finnhub's /stock/profile2 (and our own ETF fallback) return a bare ISO
  * 3166-1 alpha-2 code ("US", "HK") — the rest of the app (seed fixtures,
  * NGN Market) uses full country names ("United States", "Nigeria"), and
- * NetWorthExplorer/portfolio allocation group holdings by this exact
+ * GeographicBreakdown/portfolio allocation group holdings by this exact
  * string, so a code left un-normalized silently splits one country into
  * two buckets ("United States" and "US" both showing up as separate
  * slices of the same pie). Intl.DisplayNames is a built-in, no lookup

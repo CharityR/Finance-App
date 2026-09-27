@@ -1,22 +1,10 @@
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { HorizontalBar } from "@/components/ui/horizontal-bar"
 import { Tilt } from "@/components/ui/tilt"
 import { formatMoney } from "@/lib/money"
 import type { BudgetCategoryProgress } from "@/server/services/budgets.service"
-
-function ProgressBar({ percentage }: { percentage: number }) {
-  const clamped = Math.min(percentage, 100)
-  const isOver = percentage > 100
-  return (
-    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-      <div
-        className={`h-full rounded-full transition-[width] duration-500 ease-out ${isOver ? "bg-negative" : "bg-primary"}`}
-        style={{ width: `${clamped}%` }}
-      />
-    </div>
-  )
-}
 
 export function BudgetCard({
   category,
@@ -53,7 +41,10 @@ export function BudgetCard({
               />
             </span>
           </div>
-          <ProgressBar percentage={category.percentage} />
+          <HorizontalBar
+            percentage={category.percentage}
+            tone={category.isOverspent ? "negative" : "primary"}
+          />
           <p className="text-muted-foreground text-xs">
             {category.remaining >= 0
               ? `${formatMoney(category.remaining, currency)} remaining`

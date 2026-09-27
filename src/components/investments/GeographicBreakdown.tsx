@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { TickerAvatar } from "@/components/ui/ticker-avatar"
 import { formatMoney } from "@/lib/money"
 import type {
-  NetWorthBreakdown,
-  NetWorthCountry,
+  GeoBreakdown,
+  GeoCountry,
 } from "@/server/services/portfolio.service"
 
 const COLORS = [
@@ -78,17 +78,23 @@ function TreemapCell(props: TreemapCellProps) {
   )
 }
 
-type View =
-  { level: "countries" } | { level: "detail"; country: NetWorthCountry }
+type View = { level: "countries" } | { level: "detail"; country: GeoCountry }
 
-/** Starts straight at the country breakdown rather than repeating the
- * total value as its own click-through step — the caller (InvestmentsDashboard)
+/**
+ * Investment holdings only, grouped by geography — not the same thing as
+ * net worth (which lives on the Dashboard and also includes cash, real
+ * estate, and liabilities). Named for what it actually shows, since reusing
+ * "net worth" here would collide with that page's real net-worth figure.
+ *
+ * Starts straight at the country breakdown rather than repeating the total
+ * value as its own click-through step — the caller (InvestmentsDashboard)
  * already shows that number once in the compact summary above this, so a
- * "total" tile here would just be the same figure shown a second time. */
-export function NetWorthExplorer({
+ * "total" tile here would just be the same figure shown a second time.
+ */
+export function GeographicBreakdown({
   breakdown,
 }: {
-  breakdown: NetWorthBreakdown[]
+  breakdown: GeoBreakdown[]
 }) {
   const [currencyIndex, setCurrencyIndex] = useState(0)
   const [view, setView] = useState<View>({ level: "countries" })
@@ -99,7 +105,7 @@ export function NetWorthExplorer({
   if (!currencyData || currencyData.countries.length === 0) {
     return (
       <p className="text-muted-foreground py-8 text-center text-sm">
-        No holdings yet — add one to see your net worth breakdown.
+        No holdings yet — add one to see where they&apos;re invested.
       </p>
     )
   }

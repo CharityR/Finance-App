@@ -393,6 +393,90 @@ export const dividendEvents = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Net Worth — manually-tracked assets/liabilities and FX conversion, so the
+// dashboard can consolidate cash + investments + these into one total rather
+// than only ever showing investment holdings.
+// ---------------------------------------------------------------------------
+
+export const manualAssetCategoryEnum = pgEnum("manual_asset_category", [
+  "real_estate",
+  "other",
+])
+
+export const manualAssets = pgTable(
+  "manual_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    category: manualAssetCategoryEnum("category").notNull(),
+    name: text("name").notNull(),
+    // Drill-down key, mirrors how securities.country already groups
+    // investment holdings by geography.
+    country: text("country").notNull(),
+    currency: text("currency").notNull(),
+    value: numeric("value", { precision: 19, scale: 4 }).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("manual_assets_user_id_idx").on(table.userId)]
+)
+
+export const liabilityCategoryEnum = pgEnum("liability_category", [
+  "mortgage",
+  "loan",
+  "credit_card",
+  "other",
+])
+
+export const liabilities = pgTable(
+  "liabilities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    category: liabilityCategoryEnum("category").notNull(),
+    name: text("name").notNull(),
+    currency: text("currency").notNull(),
+    balance: numeric("balance", { precision: 19, scale: 4 }).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("liabilities_user_id_idx").on(table.userId)]
+)
+
+/**
+ * Static, seeded conversion rates — not a live FX feed (none exists in this
+ * app yet). `provenance` is always "estimated": a real number, applied
+ * transparently, but not sourced from a live market feed. See src/lib/fx.ts.
+ */
+export const fxRates = pgTable(
+  "fx_rates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    baseCurrency: text("base_currency").notNull(),
+    quoteCurrency: text("quote_currency").notNull(),
+    rate: numeric("rate", { precision: 19, scale: 6 }).notNull(),
+    asOf: date("as_of").notNull(),
+    provenance: provenanceEnum("provenance").notNull().default("estimated"),
+  },
+  (table) => [
+    uniqueIndex("fx_rates_pair_idx").on(
+      table.baseCurrency,
+      table.quoteCurrency
+    ),
+  ]
+)
+
+// ---------------------------------------------------------------------------
 // Module 12/14/28 — Company/Sector News & Watchlist (Phase 4)
 // ---------------------------------------------------------------------------
 

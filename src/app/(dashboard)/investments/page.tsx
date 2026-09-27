@@ -26,7 +26,7 @@ export default async function InvestmentsPage() {
   // total not match.
   const portfolioByCurrency =
     portfolioService.summarizePortfolioByCurrency(holdings)
-  const netWorthBreakdown = portfolioService.buildNetWorthBreakdown(holdings)
+  const geoBreakdown = portfolioService.buildGeoBreakdown(holdings)
 
   return (
     <div className="space-y-6">
@@ -42,7 +42,7 @@ export default async function InvestmentsPage() {
 
       <InvestmentsDashboard
         portfolioByCurrency={portfolioByCurrency}
-        netWorthBreakdown={netWorthBreakdown}
+        geoBreakdown={geoBreakdown}
         holdings={holdings}
         dividendIncome={dividendIncome}
         news={news}

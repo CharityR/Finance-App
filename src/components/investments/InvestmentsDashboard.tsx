@@ -5,18 +5,18 @@ import { useState } from "react"
 
 import { AllocationChart } from "@/components/investments/AllocationChart"
 import { DividendIncomeCard } from "@/components/investments/DividendIncomeCard"
+import { GeographicBreakdown } from "@/components/investments/GeographicBreakdown"
 import { HoldingsTable } from "@/components/investments/HoldingsTable"
-import { NetWorthExplorer } from "@/components/investments/NetWorthExplorer"
 import { NewsFeed, type NewsFeedItem } from "@/components/investments/NewsFeed"
 import { TopPerformersCard } from "@/components/investments/TopPerformersCard"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Separator } from "@/components/ui/separator"
-import { formatMoney } from "@/lib/money"
+import { formatMoney, formatMoneyParts } from "@/lib/money"
 import type { DividendIncomeByCurrency } from "@/server/services/dividend-income.service"
 import type { HoldingValuation } from "@/server/services/holdings.service"
 import type {
-  NetWorthBreakdown,
+  GeoBreakdown,
   PortfolioSummaryForCurrency,
 } from "@/server/services/portfolio.service"
 
@@ -29,13 +29,13 @@ import type {
  */
 export function InvestmentsDashboard({
   portfolioByCurrency,
-  netWorthBreakdown,
+  geoBreakdown,
   holdings,
   dividendIncome,
   news,
 }: {
   portfolioByCurrency: PortfolioSummaryForCurrency[]
-  netWorthBreakdown: NetWorthBreakdown[]
+  geoBreakdown: GeoBreakdown[]
   holdings: HoldingValuation[]
   dividendIncome: DividendIncomeByCurrency[]
   news: NewsFeedItem[]
@@ -64,7 +64,7 @@ export function InvestmentsDashboard({
   const currencyHoldings = holdings.filter(
     (h) => h.currency === summary.currency
   )
-  const currencyBreakdown = netWorthBreakdown.filter(
+  const currencyBreakdown = geoBreakdown.filter(
     (b) => b.currency === summary.currency
   )
   const currencyDividends = dividendIncome.filter(
@@ -82,8 +82,12 @@ export function InvestmentsDashboard({
             <p className="text-muted-foreground text-xs">
               Total value ({summary.currency})
             </p>
+            {/* Currency already labeled above — the symbol itself is
+                dropped here, not just smaller, since at this size the
+                Naira sign's double bar reads as a strikethrough through
+                the number (see NetWorthHero.tsx for the same fix). */}
             <p className="text-3xl font-semibold tracking-tight">
-              {formatMoney(summary.totalValue, summary.currency)}
+              {formatMoneyParts(summary.totalValue, summary.currency).number}
             </p>
           </div>
           <div>
@@ -144,7 +148,7 @@ export function InvestmentsDashboard({
             <h3 className="text-muted-foreground mb-2 text-sm font-medium">
               By geography
             </h3>
-            <NetWorthExplorer breakdown={currencyBreakdown} />
+            <GeographicBreakdown breakdown={currencyBreakdown} />
           </div>
           <div className="space-y-4">
             <div>

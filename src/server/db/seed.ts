@@ -193,6 +193,27 @@ async function main() {
     console.log("News items already seeded, skipping.")
   }
 
+  const existingFxRate = await db.query.fxRates.findFirst({
+    where: (r, { eq, and }) =>
+      and(eq(r.baseCurrency, "USD"), eq(r.quoteCurrency, "NGN")),
+  })
+  if (!existingFxRate) {
+    // A static, hand-set rate — there is no live FX provider in this app
+    // yet (see src/lib/fx.ts). Update this row's value/asOf by hand if it
+    // drifts too far from reality; net-worth.service.ts tags every
+    // conversion that uses it "estimated", never "actual".
+    await db.insert(schema.fxRates).values({
+      baseCurrency: "USD",
+      quoteCurrency: "NGN",
+      rate: "1600",
+      asOf: new Date().toISOString().slice(0, 10),
+      provenance: "estimated",
+    })
+    console.log("Seeded USD -> NGN fx rate (1,600, static).")
+  } else {
+    console.log("FX rate already seeded, skipping.")
+  }
+
   await client.end()
 }
 

@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { HorizontalBar } from "@/components/ui/horizontal-bar"
 import { Tilt } from "@/components/ui/tilt"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { ContributionDialog } from "@/components/goals/ContributionDialog"
@@ -99,12 +100,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
               />
             </span>
           </div>
-          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-            <div
-              className="bg-primary h-full rounded-full transition-[width] duration-500 ease-out"
-              style={{ width: `${clamped}%` }}
-            />
-          </div>
+          <HorizontalBar percentage={clamped} />
           <p className="text-muted-foreground text-xs">
             <AnimatedNumber
               value={goal.progress.percentage}

@@ -82,17 +82,19 @@ function summarizeGroup(
 
 /**
  * Returns one summary per currency rather than a single blended total —
- * summing NGN and USD holdings into one number would be meaningless (and
- * wrong) without an FX conversion step, which isn't built until Phase 8.
+ * this is the Investments page's own view of holdings, by design shown
+ * separately per currency (see InvestmentsDashboard.tsx's currency toggle).
+ * A consolidated, FX-converted total across all currencies (and asset
+ * types) is a different view, computed by net-worth.service.ts instead.
  * Sorted so the currency with the most holdings appears first.
  *
  * Pure/synchronous — takes an already-fetched holdings list rather than a
- * userId, so a caller that also needs `getNetWorthBreakdown` (or anything
- * else derived from the same holdings) can fetch
- * `listHoldingsWithValuation` once and derive both from it. Two independent
- * fetches would each hit the live-quote API separately, which could return
- * two different prices for the same holding within one page load and make
- * the two views disagree on the total.
+ * userId, so a caller that also needs `getGeoBreakdown` (or anything else
+ * derived from the same holdings) can fetch `listHoldingsWithValuation`
+ * once and derive both from it. Two independent fetches would each hit the
+ * live-quote API separately, which could return two different prices for
+ * the same holding within one page load and make the two views disagree on
+ * the total.
  */
 export function summarizePortfolioByCurrency(
   holdings: HoldingValuation[]
@@ -117,7 +119,7 @@ export async function getPortfolioSummary(
   return summarizePortfolioByCurrency(holdings)
 }
 
-export type NetWorthHolding = {
+export type GeoHolding = {
   id: string
   ticker: string
   name: string
@@ -127,24 +129,24 @@ export type NetWorthHolding = {
   gainLossPercent: number
 }
 
-export type NetWorthSector = {
+export type GeoSector = {
   sector: string
   value: number
   percentage: number // share of the country's value
-  holdings: NetWorthHolding[]
+  holdings: GeoHolding[]
 }
 
-export type NetWorthCountry = {
+export type GeoCountry = {
   country: string
   value: number
   percentage: number // share of the currency's total value
-  sectors: NetWorthSector[]
+  sectors: GeoSector[]
 }
 
-export type NetWorthBreakdown = {
+export type GeoBreakdown = {
   currency: string
   totalValue: number
-  countries: NetWorthCountry[]
+  countries: GeoCountry[]
 }
 
 /**
@@ -153,13 +155,18 @@ export type NetWorthBreakdown = {
  * above — kept separate since the two views serve different UI needs
  * (independent donut charts vs. a click-to-drill treemap).
  *
+ * Named "Geo" (not "net worth" — see GeographicBreakdown.tsx) because this
+ * is investment holdings only, grouped by geography; it doesn't include
+ * cash, real estate, or liabilities. Actual net worth lives in
+ * net-worth.service.ts.
+ *
  * Pure/synchronous for the same reason as summarizePortfolioByCurrency —
  * share one holdings fetch with that function rather than each re-fetching
  * live quotes independently.
  */
-export function buildNetWorthBreakdown(
+export function buildGeoBreakdown(
   holdings: HoldingValuation[]
-): NetWorthBreakdown[] {
+): GeoBreakdown[] {
   const byCurrency = new Map<string, HoldingValuation[]>()
   for (const h of holdings) {
     if (!byCurrency.has(h.currency)) byCurrency.set(h.currency, [])
@@ -176,7 +183,7 @@ export function buildNetWorthBreakdown(
         byCountry.get(h.country)!.push(h)
       }
 
-      const countries: NetWorthCountry[] = Array.from(byCountry.entries()).map(
+      const countries: GeoCountry[] = Array.from(byCountry.entries()).map(
         ([country, countryHoldings]) => {
           const countryValue = countryHoldings.reduce(
             (sum, h) => sum + h.currentValue,
@@ -190,7 +197,7 @@ export function buildNetWorthBreakdown(
             bySector.get(sector)!.push(h)
           }
 
-          const sectors: NetWorthSector[] = Array.from(bySector.entries())
+          const sectors: GeoSector[] = Array.from(bySector.entries())
             .map(([sector, sectorHoldings]) => {
               const sectorValue = sectorHoldings.reduce(
                 (sum, h) => sum + h.currentValue,
@@ -236,9 +243,9 @@ export function buildNetWorthBreakdown(
 
 /** Convenience wrapper for callers that only need this one view and don't
  * already have a holdings list on hand. */
-export async function getNetWorthBreakdown(
+export async function getGeoBreakdown(
   userId: string
-): Promise<NetWorthBreakdown[]> {
+): Promise<GeoBreakdown[]> {
   const holdings = await holdingsService.listHoldingsWithValuation(userId)
-  return buildNetWorthBreakdown(holdings)
+  return buildGeoBreakdown(holdings)
 }
