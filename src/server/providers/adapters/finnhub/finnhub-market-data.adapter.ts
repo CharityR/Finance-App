@@ -36,7 +36,15 @@ async function finnhubGet<T>(path: string, params: Record<string, string>) {
     url.searchParams.set(key, value)
   url.searchParams.set("token", serverEnv.FINNHUB_API_KEY)
 
-  const res = await fetch(url, { next: { revalidate: 0 } })
+  // No timeout here previously — a slow/hanging Finnhub response had nothing
+  // capping it and could stall the whole request indefinitely. 5s is
+  // generous for a quote lookup; tryLive()'s own .catch(() => null) already
+  // treats any rejection (including this abort) as "live data unavailable,"
+  // so callers still get their existing mock-fallback behavior.
+  const res = await fetch(url, {
+    next: { revalidate: 0 },
+    signal: AbortSignal.timeout(5000),
+  })
   if (!res.ok) return null
 
   const body = (await res.json()) as T | { error: string }

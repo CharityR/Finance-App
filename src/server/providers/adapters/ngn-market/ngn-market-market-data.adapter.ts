@@ -50,9 +50,12 @@ async function ngnMarketGet<T>(
   for (const [key, value] of Object.entries(params))
     url.searchParams.set(key, value)
 
+  // See the matching comment in the Finnhub adapter — no timeout here
+  // previously meant a slow/hanging response had nothing capping it.
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${serverEnv.NGN_MARKET_API_KEY}` },
     next: { revalidate: 0 },
+    signal: AbortSignal.timeout(5000),
   })
   // Plan-restricted endpoints return 403 with {success:false, error:{code:"PLAN_REQUIRED", ...}}
   // — that's an expected, routine outcome on the free tier, not a bug.

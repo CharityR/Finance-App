@@ -49,31 +49,6 @@ function sumConverted<T>(
   )
 }
 
-/** Fetches each security's price history ONCE (not once per month in the
- * trend loop below — that was the original version's bug: 6 months x N
- * securities x 2 reporting currencies worth of redundant DB round trips per
- * dashboard load). Returns snapshots sorted desc by fetchedAt per security,
- * so the trend loop can pick the nearest one at or before each month's
- * cutoff with a pure in-memory lookup instead of another query. */
-async function loadPriceHistories(
-  securityIds: string[]
-): Promise<Map<string, { price: number; fetchedAt: Date }[]>> {
-  const histories = await Promise.all(
-    securityIds.map((id) => securitiesRepo.getPriceHistory(id, 60))
-  )
-  const map = new Map<string, { price: number; fetchedAt: Date }[]>()
-  securityIds.forEach((id, i) => {
-    map.set(
-      id,
-      histories[i].map((p) => ({
-        price: Number(p.price),
-        fetchedAt: p.fetchedAt,
-      }))
-    )
-  })
-  return map
-}
-
 /** Nearest snapshot at or before `asOf` per security, falling back to the
  * earliest snapshot on hand when every snapshot postdates `asOf` (seed data
  * is short, so an old "as of" date otherwise has nothing to match) — never
@@ -109,27 +84,43 @@ function investmentsValueAt(
   }, 0)
 }
 
+type NetWorthRawData = {
+  cashNow: number
+  cashCurrency: string
+  holdings: HoldingValuation[]
+  monthKeys: string[]
+  netFlowByMonth: number[]
+  realEstate: Awaited<
+    ReturnType<typeof manualAssetsRepo.listManualAssetsByCategory>
+  >
+  otherAssets: Awaited<
+    ReturnType<typeof manualAssetsRepo.listManualAssetsByCategory>
+  >
+  liabilities: Awaited<ReturnType<typeof liabilitiesRepo.listLiabilities>>
+  fxTable: FxRateTable
+  priceHistories: Map<string, { price: number; fetchedAt: Date }[]>
+}
+
+const TREND_MONTHS = 6
+
 /**
- * Takes an already-fetched `holdings` list rather than a userId, for the
- * same reason portfolio.service.ts's pure functions do: this is normally
- * called twice per dashboard load (once per reporting currency), and
- * `listHoldingsWithValuation` hits a live, rate-limited, un-timed-out
- * market-data API per holding — fetching it independently in each call
- * (it originally did) multiplies that external-API cost and, under load,
- * can stall the whole page for minutes. Callers should fetch holdings once
- * (e.g. dashboard.service.ts) and pass the same array into every call.
+ * Fetches everything net worth needs exactly ONCE, regardless of how many
+ * reporting currencies the caller wants a summary in. This replaces the
+ * previous design, which fetched all of this independently inside
+ * getNetWorth() every time it was called — since the dashboard always wants
+ * both an NGN and a USD summary, that meant opening balance, net flow,
+ * 6-month transaction history, manual assets, liabilities, FX rates, and
+ * price history were each queried twice per page load for no reason: only
+ * the final currency conversion differs between the two summaries, not the
+ * underlying data. Also batches price history into one query instead of
+ * one-per-holding (see getPriceHistoriesForSecurities).
  */
-export async function getNetWorth(
+async function fetchNetWorthRawData(
   userId: string,
   holdings: HoldingValuation[],
-  /** Currency the user's single cash account is assumed to be in — mirrors
-   * dashboard.service.ts's existing assumption (cash balance = the caller's
-   * base currency), not a new one introduced here. */
-  cashCurrency: string,
-  reportingCurrency: string
-): Promise<NetWorthSummary> {
-  const months = 6
-  const monthKeys = trailingMonthKeys(months)
+  cashCurrency: string
+): Promise<NetWorthRawData> {
+  const monthKeys = trailingMonthKeys(TREND_MONTHS)
   const securityIds = holdings.map((h) => h.securityId)
 
   const [
@@ -140,21 +131,52 @@ export async function getNetWorth(
     otherAssets,
     liabilities,
     fxTable,
-    priceHistories,
+    priceHistoryRows,
   ] = await Promise.all([
     getTotalOpeningBalance(userId),
     getAllTimeNetFlow(userId),
-    getMonthlyTotalsRange(userId, months),
+    getMonthlyTotalsRange(userId, TREND_MONTHS),
     manualAssetsRepo.listManualAssetsByCategory(userId, "real_estate"),
     manualAssetsRepo.listManualAssetsByCategory(userId, "other"),
     liabilitiesRepo.listLiabilities(userId),
     loadFxRates(),
-    loadPriceHistories(securityIds),
+    securitiesRepo.getPriceHistoriesForSecurities(securityIds, 60),
   ])
 
-  const cashNow = openingBalance + allTimeNet
+  const priceHistories = new Map<
+    string,
+    { price: number; fetchedAt: Date }[]
+  >()
+  for (const row of priceHistoryRows) {
+    const list = priceHistories.get(row.securityId) ?? []
+    list.push({ price: Number(row.price), fetchedAt: row.fetchedAt })
+    priceHistories.set(row.securityId, list)
+  }
 
-  // --- current totals -------------------------------------------------
+  return {
+    cashNow: openingBalance + allTimeNet,
+    cashCurrency,
+    holdings,
+    monthKeys,
+    netFlowByMonth: monthlyFlows.map((m) => m.income - m.expense),
+    realEstate,
+    otherAssets,
+    liabilities,
+    fxTable,
+    priceHistories,
+  }
+}
+
+/** Pure — all the conversion/composition/trend math, given already-fetched
+ * raw data. No DB access, so computing a second (or third) reporting
+ * currency from the same raw data costs nothing beyond arithmetic. */
+function computeNetWorthSummary(
+  raw: NetWorthRawData,
+  reportingCurrency: string
+): NetWorthSummary {
+  const { cashNow, cashCurrency, holdings, fxTable } = raw
+  const securityIds = holdings.map((h) => h.securityId)
+
   const cashValue = convertAmount(
     cashNow,
     cashCurrency,
@@ -169,21 +191,21 @@ export async function getNetWorth(
     fxTable
   )
   const realEstateValue = sumConverted(
-    realEstate,
+    raw.realEstate,
     (a) => Number(a.value),
     (a) => a.currency,
     reportingCurrency,
     fxTable
   )
   const otherAssetsValue = sumConverted(
-    otherAssets,
+    raw.otherAssets,
     (a) => Number(a.value),
     (a) => a.currency,
     reportingCurrency,
     fxTable
   )
   const liabilitiesValue = sumConverted(
-    liabilities,
+    raw.liabilities,
     (l) => Number(l.balance),
     (l) => l.currency,
     reportingCurrency,
@@ -198,14 +220,13 @@ export async function getNetWorth(
     liabilities: liabilitiesValue,
   })
 
-  // --- monthly trend ----------------------------------------------------
   // Cash at each month's end = today's cash minus every net flow that
   // happened after that month ended (walking backward from "now").
-  const netFlowByMonth = monthlyFlows.map((m) => m.income - m.expense)
-
   const trend: NetWorthTrendPoint[] = []
-  for (let i = 0; i < monthKeys.length; i++) {
-    const flowAfter = netFlowByMonth.slice(i + 1).reduce((s, v) => s + v, 0)
+  for (let i = 0; i < raw.monthKeys.length; i++) {
+    const flowAfter = raw.netFlowByMonth
+      .slice(i + 1)
+      .reduce((s, v) => s + v, 0)
     const cashAtMonthEnd = cashNow - flowAfter
     const cashConverted = convertAmount(
       cashAtMonthEnd,
@@ -214,8 +235,12 @@ export async function getNetWorth(
       fxTable
     ).value
 
-    const monthEndCutoff = monthRange(monthKeys[i]).end
-    const priceById = pricesAsOf(securityIds, priceHistories, monthEndCutoff)
+    const monthEndCutoff = monthRange(raw.monthKeys[i]).end
+    const priceById = pricesAsOf(
+      securityIds,
+      raw.priceHistories,
+      monthEndCutoff
+    )
     const investmentsAtMonthEnd = investmentsValueAt(
       holdings,
       priceById,
@@ -224,21 +249,21 @@ export async function getNetWorth(
     )
 
     const realEstateAtMonthEnd = sumConverted(
-      realEstate.filter((a) => a.createdAt < monthEndCutoff),
+      raw.realEstate.filter((a) => a.createdAt < monthEndCutoff),
       (a) => Number(a.value),
       (a) => a.currency,
       reportingCurrency,
       fxTable
     )
     const otherAtMonthEnd = sumConverted(
-      otherAssets.filter((a) => a.createdAt < monthEndCutoff),
+      raw.otherAssets.filter((a) => a.createdAt < monthEndCutoff),
       (a) => Number(a.value),
       (a) => a.currency,
       reportingCurrency,
       fxTable
     )
     const liabilitiesAtMonthEnd = sumConverted(
-      liabilities.filter((l) => l.createdAt < monthEndCutoff),
+      raw.liabilities.filter((l) => l.createdAt < monthEndCutoff),
       (l) => Number(l.balance),
       (l) => l.currency,
       reportingCurrency,
@@ -246,7 +271,7 @@ export async function getNetWorth(
     )
 
     trend.push({
-      periodMonth: monthKeys[i],
+      periodMonth: raw.monthKeys[i],
       total:
         cashConverted +
         investmentsAtMonthEnd +
@@ -261,7 +286,8 @@ export async function getNetWorth(
 
   const previous = trend[trend.length - 2]?.total ?? netWorth
   const change = netWorth - previous
-  const changePercent = previous !== 0 ? (change / Math.abs(previous)) * 100 : 0
+  const changePercent =
+    previous !== 0 ? (change / Math.abs(previous)) * 100 : 0
 
   return {
     reportingCurrency,
@@ -282,4 +308,30 @@ export async function getNetWorth(
     composition,
     trend,
   }
+}
+
+/**
+ * Takes an already-fetched `holdings` list rather than a userId, same
+ * reason portfolio.service.ts's pure functions do: `listHoldingsWithValuation`
+ * hits a live market-data API per holding, so callers should fetch it once
+ * (e.g. dashboard.service.ts) and pass the same array in here rather than
+ * each independently re-fetching it.
+ *
+ * Fetches raw data ONCE (see fetchNetWorthRawData) no matter how many
+ * `reportingCurrencies` are requested — computing each summary from that
+ * one fetch is pure arithmetic, not additional queries.
+ */
+export async function getNetWorthForCurrencies(
+  userId: string,
+  holdings: HoldingValuation[],
+  /** Currency the user's single cash account is assumed to be in — mirrors
+   * dashboard.service.ts's existing assumption (cash balance = the caller's
+   * base currency), not a new one introduced here. */
+  cashCurrency: string,
+  reportingCurrencies: string[]
+): Promise<NetWorthSummary[]> {
+  const raw = await fetchNetWorthRawData(userId, holdings, cashCurrency)
+  return reportingCurrencies.map((currency) =>
+    computeNetWorthSummary(raw, currency)
+  )
 }

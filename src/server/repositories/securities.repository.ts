@@ -1,4 +1,4 @@
-import { desc, eq, ilike, or } from "drizzle-orm"
+import { asc, desc, eq, ilike, inArray, or } from "drizzle-orm"
 
 import { db, schema } from "@/server/db"
 import { marketDataProvider } from "@/server/providers/market-data-provider"
@@ -120,6 +120,32 @@ export async function getPriceHistory(securityId: string, limit = 30) {
     where: eq(schema.priceSnapshots.securityId, securityId),
     orderBy: [desc(schema.priceSnapshots.fetchedAt)],
     limit,
+  })
+}
+
+/**
+ * Same data as calling getPriceHistory() once per id, but as ONE query
+ * instead of N — net-worth.service.ts's trend calculation originally did
+ * exactly that (an N+1: one round trip per holding), which was one of the
+ * bigger contributors to slow/timed-out dashboard loads. Ordered by
+ * security then newest-first so a caller can group by `securityId` and take
+ * the first `perSecurityLimit` per group in memory; the row cap here is a
+ * generous approximation (ids.length * perSecurityLimit) rather than an
+ * exact per-group limit, which Postgres can't express without a window
+ * function — fine for this feature's already-"estimated" trend data.
+ */
+export async function getPriceHistoriesForSecurities(
+  securityIds: string[],
+  perSecurityLimit = 60
+) {
+  if (securityIds.length === 0) return []
+  return db.query.priceSnapshots.findMany({
+    where: inArray(schema.priceSnapshots.securityId, securityIds),
+    orderBy: [
+      asc(schema.priceSnapshots.securityId),
+      desc(schema.priceSnapshots.fetchedAt),
+    ],
+    limit: securityIds.length * perSecurityLimit,
   })
 }
 
