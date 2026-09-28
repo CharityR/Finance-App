@@ -58,7 +58,6 @@ function LoginForm() {
     }
 
     router.push(searchParams.get("redirectTo") ?? "/dashboard")
-    router.refresh()
   }
 
   return (
